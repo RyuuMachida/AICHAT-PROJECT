@@ -1,0 +1,7 @@
+hi, gw mau bikin website chatbot menggunakan api. kira kira api ai apa ya yang bisa unlimited token dan free buat project sekolah. lalu untuk konsepmnya sendiri adalah kita masuk ke web nanti disuguhkan, HI, SELAMAT DATANG DI ...  , lalu next slide, pengertian chatbotnya, lalu next lagi hubungkan anda dengan kami ada content lgoin dengan google, nanti kita pakai supabase atau firebase nih? lalu selanjutnya adalah saran mau mulai nanya apa? ada pilihan, 
+
+bisa membuat website sederhana, panduan aplikasi, terus apalah. 
+
+kaya claude ada gitu ada fast to ai, bisa pilih nanti langsung di send ke ai nya biar ai jawab tentnag konsep tanya nya. nah abis itu masuk ke tampilan ai nya, di dekstop ada sidebar buat nampilin sesi sesi, profile content paling bawah, setting, buat baru, searchbar buat nyari judul sesi, nah judul sesi diatur ai sesuai konteks ya lalu bisa diubah juga kok. dikiri sidebar kanannya gede dan luas udah pasti buat input pertanyaan, masukin foto, file, terus chat kita dengan ai dan jawaban ai nya. lalu blank chat nya juga ada kalau baru buat akun tapi tetep udah dibuatin sesi baru.
+
+design nya sendiri lu bikinkan dulu nanti gw revisi revisi sampe jadi. warna utamanya putih, primary nya liat di gambar aja. dan gw anti emoji, jadi pastiin pake logo dan svg ya, pastiin sesuai svg dan log, kalau logo ambil dari https://dashboardicons.com/icons/, kalau svg yeah yang penting sesuai, pake token ai nya jangan boros ya gw perlu nih, deadline 5 hari. kasih saran nama yang elegant dan indonesia, kaya brand brand, misal gemini, cluade dll
