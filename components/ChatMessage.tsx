@@ -88,6 +88,47 @@ function CollapsibleFileCard({ attachment }: { attachment: FileAttachment }) {
   );
 }
 
+function MacTerminalBlock({ language, code }: { language: string; code: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      const textArea = document.createElement("textarea");
+      textArea.value = code;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  return (
+    <div className="mac-terminal-block">
+      <div className="mac-terminal-header">
+        <div className="mac-terminal-dots">
+          <span className="mac-dot red"></span>
+          <span className="mac-dot yellow"></span>
+          <span className="mac-dot green"></span>
+        </div>
+        <span className="mac-terminal-title">{language || "code"}</span>
+        <button className="mac-terminal-copy" onClick={handleCopy} title="Copy code">
+          {copied ? <IconCheck size={12} /> : <IconCopy size={12} />}
+          <span>{copied ? "Copied" : "Copy"}</span>
+        </button>
+      </div>
+      <div className="mac-terminal-body">
+        <pre><code className={language ? `language-${language}` : ""}>{code}</code></pre>
+      </div>
+    </div>
+  );
+}
+
 export default function ChatMessage({ role, content, timestamp, attachments }: ChatMessageProps) {
   const [copied, setCopied] = React.useState(false);
 
@@ -168,7 +209,23 @@ export default function ChatMessage({ role, content, timestamp, attachments }: C
 
           <div className="message-text-content">
             {role === "assistant" ? (
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  code(props) {
+                    const { children, className, node, ...rest } = props;
+                    const match = /language-(\w+)/.exec(className || "");
+                    const isInline = !match && !String(children).includes("\n");
+                    if (isInline) {
+                      return <code className={className} {...rest}>{children}</code>;
+                    }
+                    const lang = match ? match[1] : "";
+                    return (
+                      <MacTerminalBlock language={lang} code={String(children).replace(/\n$/, "")} />
+                    );
+                  }
+                }}
+              >
                 {textContent}
               </ReactMarkdown>
             ) : (
