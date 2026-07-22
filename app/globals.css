@@ -424,6 +424,24 @@ body {
   font-weight: 700;
   font-size: 13px;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.collapsed-profile-avatar {
+  margin: 0 auto;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.collapsed-profile-avatar:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 12px rgba(255, 206, 153, 0.4);
+}
+
+.ai-model-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .profile-details {

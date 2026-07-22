@@ -1,13 +1,20 @@
 "use client";
 
 import React from "react";
-import { IconBot } from "./Icons";
 
-export default function TypingIndicator() {
+interface TypingIndicatorProps {
+  provider?: "gemini" | "groq";
+}
+
+export default function TypingIndicator({ provider = "gemini" }: TypingIndicatorProps) {
   return (
     <div className="skeleton-response-container">
       <div className="message-avatar">
-        <IconBot size={16} color="var(--accent)" />
+        {provider === "groq" ? (
+          <img src="/llama.png" alt="Llama" className="ai-model-avatar-img" />
+        ) : (
+          <img src="/gemini.png" alt="Gemini" className="ai-model-avatar-img" />
+        )}
       </div>
       <div className="skeleton-response-body">
         <div className="skeleton-line long" />

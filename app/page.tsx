@@ -636,9 +636,10 @@ export default function Home() {
                     attachments={msg.attachments}
                     userPhoto={currentUser?.photoURL || null}
                     username={username}
+                    provider={provider}
                   />
                 ))}
-                {isLoading && messages[messages.length - 1]?.role === "user" && <TypingIndicator />}
+                {isLoading && messages[messages.length - 1]?.role === "user" && <TypingIndicator provider={provider} />}
                 <div ref={chatEndRef} />
               </div>
             </div>

@@ -245,7 +245,7 @@ export default function Sidebar({
 
         {/* Profile footer */}
         <div className="sidebar-footer-profile" ref={menuRef}>
-          {showMenu && (
+          {showMenu && !collapsed && (
             <div className="profile-dropdown-menu">
               <button className="dropdown-item" onClick={() => { setShowMenu(false); onChangeAccount(); }}>
                 <IconGear size={14} color="currentColor" />
@@ -263,27 +263,41 @@ export default function Sidebar({
             </div>
           )}
 
-          <div className="profile-container">
-            <div className="profile-avatar">
+          {collapsed ? (
+            <div
+              className="profile-avatar collapsed-profile-avatar"
+              onClick={onToggleCollapse}
+              title="Buka Sidebar (Unminimize)"
+            >
               {userPhoto ? (
                 <img src={userPhoto} alt={username} className="profile-avatar-img" />
               ) : (
                 username.charAt(0).toUpperCase()
               )}
             </div>
-            <div className="profile-details">
-              <span className="profile-name">{username}</span>
-              <span className="profile-sub" title={email}>{email || "Tambah email"}</span>
+          ) : (
+            <div className="profile-container">
+              <div className="profile-avatar">
+                {userPhoto ? (
+                  <img src={userPhoto} alt={username} className="profile-avatar-img" />
+                ) : (
+                  username.charAt(0).toUpperCase()
+                )}
+              </div>
+              <div className="profile-details">
+                <span className="profile-name">{username}</span>
+                <span className="profile-sub" title={email}>{email || "Tambah email"}</span>
+              </div>
+              <div className="profile-actions">
+                <button className="profile-action-btn" onClick={onOpenSettings} title="Pengaturan">
+                  <IconGear size={15} />
+                </button>
+                <button className="profile-action-btn" onClick={() => setShowMenu(!showMenu)} title="Menu">
+                  <IconMore size={15} />
+                </button>
+              </div>
             </div>
-            <div className="profile-actions">
-              <button className="profile-action-btn" onClick={onOpenSettings} title="Pengaturan">
-                <IconGear size={15} />
-              </button>
-              <button className="profile-action-btn" onClick={() => setShowMenu(!showMenu)} title="Menu">
-                <IconMore size={15} />
-              </button>
-            </div>
-          </div>
+          )}
         </div>
       </aside>
     </>
