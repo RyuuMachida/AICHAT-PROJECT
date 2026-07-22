@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { IconBot, IconCopy, IconCheck } from "./Icons";
+import { IconBot, IconCopy, IconCheck, IconClose } from "./Icons";
 
 interface FileAttachment {
   id: string;
@@ -55,38 +55,86 @@ function ChevronIcon({ open, size = 12 }: { open: boolean; size?: number }) {
   );
 }
 
-function CollapsibleFileCard({ attachment }: { attachment: FileAttachment }) {
-  const [open, setOpen] = useState(false);
+function CodeFileModalCard({ attachment }: { attachment: FileAttachment }) {
+  const [showModal, setShowModal] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-  // Detect language from file extension for syntax highlighting hint
   const ext = attachment.name.split(".").pop()?.toLowerCase() || "";
   const langMap: Record<string, string> = {
     js: "javascript", jsx: "javascript", ts: "typescript", tsx: "typescript",
     py: "python", html: "html", css: "css", json: "json", md: "markdown",
     csv: "csv", txt: "text",
   };
+  const lang = langMap[ext] || ext;
   const lineCount = attachment.data.split("\n").length;
 
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(attachment.data);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      const textArea = document.createElement("textarea");
+      textArea.value = attachment.data;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   return (
-    <div className="file-card">
-      <button className="file-card-header" onClick={() => setOpen(!open)}>
-        <div className="file-card-icon">
-          <FileIcon size={14} />
-        </div>
-        <div className="file-card-info">
-          <span className="file-card-name">{attachment.name}</span>
-          <span className="file-card-meta">{langMap[ext] || ext} · {lineCount} baris</span>
-        </div>
-        <div className="file-card-chevron">
-          <ChevronIcon open={open} />
-        </div>
-      </button>
-      {open && (
-        <div className="file-card-body">
-          <pre className="file-card-code"><code>{attachment.data}</code></pre>
+    <>
+      <div className="file-card">
+        <button className="file-card-header" onClick={() => setShowModal(true)}>
+          <div className="file-card-icon">
+            <FileIcon size={14} />
+          </div>
+          <div className="file-card-info">
+            <span className="file-card-name">{attachment.name}</span>
+            <span className="file-card-meta">{lang} · {lineCount} baris</span>
+          </div>
+          <div className="file-card-chevron">
+            <ChevronIcon open={false} />
+          </div>
+        </button>
+      </div>
+
+      {showModal && (
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="code-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="mac-terminal-block modal-style">
+              <div className="mac-terminal-header">
+                <div className="mac-terminal-dots">
+                  <span className="mac-dot red" onClick={() => setShowModal(false)} title="Tutup"></span>
+                  <span className="mac-dot yellow"></span>
+                  <span className="mac-dot green"></span>
+                </div>
+                <div className="mac-terminal-title-group">
+                  <span className="mac-terminal-title font-mono">{attachment.name}</span>
+                  <span className="mac-terminal-submeta">{lang.toUpperCase()} • {lineCount} BARIS</span>
+                </div>
+                <div className="mac-terminal-actions">
+                  <button className="mac-terminal-copy" onClick={handleCopy} title="Salin Kode">
+                    {copied ? <IconCheck size={13} /> : <IconCopy size={13} />}
+                    <span>{copied ? "Berhasil Disalin" : "Salin Kode"}</span>
+                  </button>
+                  <button className="code-modal-close" onClick={() => setShowModal(false)} title="Tutup modal">
+                    <IconClose size={14} />
+                  </button>
+                </div>
+              </div>
+              <div className="mac-terminal-body modal-scroll">
+                <pre><code className={`language-${lang}`}>{attachment.data}</code></pre>
+              </div>
+            </div>
+          </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
@@ -204,11 +252,11 @@ export default function ChatMessage({ role, content, timestamp, attachments, use
             </div>
           )}
 
-          {/* File attachments as collapsible cards */}
+          {/* File attachments as modal code preview cards */}
           {fileAttachments.length > 0 && (
             <div className="message-file-cards">
               {fileAttachments.map((att) => (
-                <CollapsibleFileCard key={att.id} attachment={att} />
+                <CodeFileModalCard key={att.id} attachment={att} />
               ))}
             </div>
           )}

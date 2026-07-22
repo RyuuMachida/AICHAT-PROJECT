@@ -5,6 +5,8 @@ import { IconSend, IconLoader, IconSparkle, IconCode, IconPencil, IconLightbulb,
 import { Attachment } from "./ChatInput";
 import { compressImage } from "@/lib/imageUtils";
 
+import ModelSelector, { AIProvider } from "./ModelSelector";
+
 interface WelcomeScreenProps {
   username: string;
   value: string;
@@ -17,6 +19,9 @@ interface WelcomeScreenProps {
   isRecording: boolean;
   onStartRecording: () => void;
   onStopRecording: () => void;
+  provider: AIProvider;
+  onSelectProvider: (prov: AIProvider) => void;
+  requestHistory: number[];
 }
 
 function getGreeting() {
@@ -55,6 +60,9 @@ export default function WelcomeScreen({
   isRecording,
   onStartRecording,
   onStopRecording,
+  provider,
+  onSelectProvider,
+  requestHistory,
 }: WelcomeScreenProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -208,10 +216,11 @@ export default function WelcomeScreen({
             >
               <IconClip size={16} color="currentColor" />
             </button>
-            <div className="model-badge">
-              <IconSparkle size={12} color="var(--accent)" />
-              Llama 3.3 70B
-            </div>
+            <ModelSelector
+              provider={provider}
+              onSelectProvider={onSelectProvider}
+              requestHistory={requestHistory}
+            />
           </div>
 
           <div className="welcome-input-right">

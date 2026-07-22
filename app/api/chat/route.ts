@@ -30,7 +30,7 @@ Pedoman & Aturan Respons:
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages } = await req.json();
+    const { messages, provider = "gemini" } = await req.json();
 
     const geminiApiKey = process.env.GEMINI_API_KEY;
     const groqApiKey = process.env.GROQ_API_KEY;
@@ -45,8 +45,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1. Try Google Gemini API (gemini-2.5-flash) if key exists
-    if (geminiApiKey && !geminiApiKey.includes("your_")) {
+    // 1. If provider is "gemini" and key exists, try Google Gemini 2.5 Flash
+    if (provider === "gemini" && geminiApiKey && !geminiApiKey.includes("your_")) {
       try {
         const ai = new GoogleGenAI({ apiKey: geminiApiKey });
 

@@ -8,6 +8,7 @@ import WelcomeScreen from "@/components/WelcomeScreen";
 import Sidebar, { Conversation, MessageAttachment } from "@/components/Sidebar";
 import OnboardingSlides from "@/components/OnboardingSlides";
 import SettingsView from "@/components/SettingsView";
+import ModelSelector, { AIProvider } from "@/components/ModelSelector";
 import { IconSparkle } from "@/components/Icons";
 
 // Firebase imports
@@ -84,6 +85,13 @@ export default function Home() {
   const [view, setView] = useState<"chat" | "settings">("chat");
   const [username, setUsername] = useState("User");
   const [email, setEmail] = useState("");
+  const [provider, setProvider] = useState<AIProvider>("gemini");
+  const [requestHistory, setRequestHistory] = useState<number[]>([]);
+
+  const handleSelectProvider = useCallback((prov: AIProvider) => {
+    setProvider(prov);
+    localStorage.setItem("chatbot-ai-provider", prov);
+  }, []);
 
   // Multimodal state
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -477,10 +485,13 @@ export default function Home() {
 
     try {
       const headers: Record<string, string> = { "Content-Type": "application/json" };
+      // Record request timestamp for rate limit tracking
+      setRequestHistory((prev) => [...prev, Date.now()]);
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers,
-        body: JSON.stringify({ messages: apiMessages }),
+        body: JSON.stringify({ messages: apiMessages, provider }),
         signal: controller.signal,
       });
 
@@ -597,14 +608,19 @@ export default function Home() {
             isRecording={isRecording}
             onStartRecording={handleStartRecording}
             onStopRecording={handleStopRecording}
+            provider={provider}
+            onSelectProvider={handleSelectProvider}
+            requestHistory={requestHistory}
           />
         ) : (
           /* Active chat */
           <>
             <div className="chat-top-bar">
-              <div className="chat-top-bar-model">
-                Llama 3.3 70B
-              </div>
+              <ModelSelector
+                provider={provider}
+                onSelectProvider={handleSelectProvider}
+                requestHistory={requestHistory}
+              />
             </div>
 
             <div className="chat-container">
