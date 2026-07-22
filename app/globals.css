@@ -433,11 +433,6 @@ body {
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.collapsed-profile-avatar:hover {
-  transform: scale(1.1);
-  box-shadow: 0 0 12px rgba(255, 206, 153, 0.4);
-}
-
 .ai-model-avatar-img {
   width: 100%;
   height: 100%;
@@ -817,9 +812,7 @@ body {
 }
 
 .message.assistant .message-avatar {
-  background: rgba(255, 206, 153, 0.1);
   color: var(--accent);
-  border: 1px solid rgba(255, 206, 153, 0.15);
 }
 
 .message.user .message-avatar {

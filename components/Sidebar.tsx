@@ -23,7 +23,7 @@ export interface MessageAttachment {
 export interface Conversation {
   id: string;
   title: string;
-  messages: { role: "user" | "assistant"; content: string | any[]; timestamp: string; attachments?: MessageAttachment[] }[];
+  messages: { role: "user" | "assistant"; content: string | any[]; timestamp: string; attachments?: MessageAttachment[]; provider?: "gemini" | "groq" }[];
   createdAt: string;
   pinned?: boolean;
 }
@@ -267,7 +267,7 @@ export default function Sidebar({
             <div
               className="profile-avatar collapsed-profile-avatar"
               onClick={onToggleCollapse}
-              title="Buka Sidebar (Unminimize)"
+              title="Buka Sidebar"
             >
               {userPhoto ? (
                 <img src={userPhoto} alt={username} className="profile-avatar-img" />

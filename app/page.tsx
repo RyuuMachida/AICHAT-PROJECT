@@ -35,6 +35,7 @@ interface Message {
   content: string | any[]; // string or array for multimodal support
   timestamp: string;
   attachments?: MessageAttachment[]; // file/image attachments stored separately for display
+  provider?: "gemini" | "groq"; // which model answered this message
 }
 
 function generateId() {
@@ -410,6 +411,7 @@ export default function Home() {
       role: "user",
       content: displayContent,
       timestamp: getTimeString(),
+      provider,
       ...(messageAttachments.length > 0 ? { attachments: messageAttachments } : {}),
     };
     const updatedMessages = [...messages, userMessage];
@@ -529,7 +531,8 @@ export default function Home() {
       const assistantMessage: Message = {
         role: "assistant",
         content: assistantContent,
-        timestamp: getTimeString()
+        timestamp: getTimeString(),
+        provider,
       };
       const finalMessages = [...updatedMessages, assistantMessage];
       setMessages(finalMessages);
@@ -546,12 +549,13 @@ export default function Home() {
         role: "assistant",
         content: "Terjadi kesalahan. Pastikan API key sudah benar di file .env.local.\n\nError: " + (error instanceof Error ? error.message : "Unknown"),
         timestamp: getTimeString(),
+        provider,
       }]);
     } finally {
       setIsLoading(false);
       abortControllerRef.current = null;
     }
-  }, [input, isLoading, messages, activeConvoId, conversations, attachments, currentUser]);
+  }, [input, isLoading, messages, activeConvoId, conversations, attachments, currentUser, provider]);
 
   const inConversation = messages.length > 0 || setupError;
 
@@ -636,7 +640,7 @@ export default function Home() {
                     attachments={msg.attachments}
                     userPhoto={currentUser?.photoURL || null}
                     username={username}
-                    provider={provider}
+                    provider={msg.provider || provider}
                   />
                 ))}
                 {isLoading && messages[messages.length - 1]?.role === "user" && <TypingIndicator provider={provider} />}
