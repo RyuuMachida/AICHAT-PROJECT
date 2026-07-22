@@ -8,6 +8,7 @@ import WelcomeScreen from "@/components/WelcomeScreen";
 import Sidebar, { Conversation, MessageAttachment } from "@/components/Sidebar";
 import OnboardingSlides from "@/components/OnboardingSlides";
 import SettingsView from "@/components/SettingsView";
+import ShareModal from "@/components/ShareModal";
 import { IconSparkle } from "@/components/Icons";
 
 // Firebase imports
@@ -84,6 +85,7 @@ export default function Home() {
   const [view, setView] = useState<"chat" | "settings">("chat");
   const [username, setUsername] = useState("User");
   const [email, setEmail] = useState("");
+  const [shareTarget, setShareTarget] = useState<Conversation | null>(null);
 
   // Multimodal state
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -243,17 +245,7 @@ export default function Home() {
   }, [conversations, currentUser]);
 
   const handleShareConversation = useCallback((convo: Conversation) => {
-    const summaryText = `[ChatBot AI - ${convo.title}]\n\n` +
-      convo.messages
-        .map((m) => `${m.role === "user" ? "User" : "AI"}: ${typeof m.content === "string" ? m.content : "[Lampiran/Multimodal]"}`)
-        .join("\n\n");
-
-    try {
-      navigator.clipboard.writeText(summaryText);
-      alert(`Ringkasan percakapan "${convo.title}" telah disalin ke clipboard! Anda dapat membagikannya langsung.`);
-    } catch {
-      alert("Gagal menyalin percakapan ke clipboard.");
-    }
+    setShareTarget(convo);
   }, []);
 
   const handleToggleTheme = useCallback(() => {
@@ -559,6 +551,9 @@ export default function Home() {
   return (
     <div className="app-layout">
       {showOnboarding && <OnboardingSlides onComplete={handleCompleteOnboarding} />}
+      {shareTarget && (
+        <ShareModal convo={shareTarget} onClose={() => setShareTarget(null)} />
+      )}
 
       <Sidebar
         conversations={conversations}
