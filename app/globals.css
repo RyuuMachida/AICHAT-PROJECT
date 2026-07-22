@@ -394,7 +394,8 @@ body {
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -402,12 +403,20 @@ body {
 }
 
 .delete-confirm-modal {
-  background: var(--bg-secondary);
-  border-radius: 16px;
-  padding: 28px 28px 20px;
+  background: #242424;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
+  border-radius: 24px;
+  padding: 24px 24px 20px;
   width: 90%;
-  max-width: 380px;
+  max-width: 400px;
   animation: modalSlideUp 0.2s ease;
+}
+
+[data-theme="light"] .delete-confirm-modal {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
 }
 
 .delete-confirm-title {
