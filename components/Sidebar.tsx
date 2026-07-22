@@ -77,59 +77,48 @@ export default function Sidebar({
 
   return (
     <>
-      {isOpen && <div className="sidebar-overlay" onClick={onClose} />}
+      <div className={`sidebar-overlay ${isOpen ? "active" : ""}`} onClick={onClose} />
 
       <aside className={`sidebar ${isOpen ? "open" : ""} ${collapsed ? "collapsed" : ""}`}>
-        {/* Sidebar Header */}
-        <div className="sidebar-header">
-          <button className="sidebar-brand-btn" onClick={onNewChat} title="New Chat">
-            <span className="sidebar-logo">AI</span>
-            {!collapsed && <span className="sidebar-brand-name font-serif">ChatBot AI</span>}
+        {/* Top toolbar: toggle button + brand */}
+        <div className="sidebar-toolbar">
+          <button className="sidebar-toggle-btn" onClick={onToggleCollapse} title={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
+            <IconMenu size={18} />
           </button>
-          <div className="sidebar-header-actions">
-            {!collapsed && (
-              <button className="sidebar-icon-btn" onClick={onNewChat} title="Obrolan Baru">
-                <IconPlus size={16} />
-              </button>
-            )}
-            <button className="sidebar-icon-btn collapse-toggle" onClick={onToggleCollapse} title={collapsed ? "Buka Sidebar" : "Tutup Sidebar"}>
-              <IconMenu size={16} />
-            </button>
-            <button className="sidebar-icon-btn mobile-close" onClick={onClose} title="Tutup">
-              <IconClose size={16} />
-            </button>
-          </div>
+          <span className="sidebar-brand font-serif">ChatBot AI</span>
         </div>
 
-        {/* New Chat Button (collapsed state) */}
-        {collapsed && (
-          <button className="sidebar-new-btn-collapsed" onClick={onNewChat} title="Obrolan Baru">
-            <IconPlus size={18} />
+        {/* Primary nav: New chat button */}
+        <nav className="sidebar-nav">
+          <button className="nav-item primary" onClick={onNewChat}>
+            <span className="nav-item-icon"><IconPlus size={17} color="currentColor" /></span>
+            <span className="nav-item-label">New chat</span>
           </button>
-        )}
+        </nav>
 
         {/* Conversation list */}
         <div className="sidebar-conversations">
           {conversations.length > 0 && (
             <>
-              {!collapsed && <div className="sidebar-section-title">RECENT</div>}
+              <div className="sidebar-section-title">Recent</div>
               {conversations.map((c) => (
                 <button
                   key={c.id}
-                  className={`convo-item ${c.id === activeId ? "active" : ""}`}
+                  className={`conversation-item ${activeId === c.id ? "active" : ""}`}
                   onClick={() => onSelectConversation(c.id)}
                   title={c.title}
                 >
-                  <IconChat size={15} color="currentColor" />
-                  {!collapsed && <span className="convo-item-title">{c.title}</span>}
-                  {!collapsed && (
-                    <span
-                      className="convo-delete-btn"
-                      onClick={(e) => { e.stopPropagation(); onDeleteConversation(c.id); }}
-                    >
-                      <IconClose size={12} color="currentColor" />
-                    </span>
-                  )}
+                  <span className="conversation-item-icon">
+                    <IconChat size={14} color="currentColor" />
+                  </span>
+                  <span className="conversation-item-text">{c.title}</span>
+                  <span
+                    className="conversation-item-delete"
+                    onClick={(e) => { e.stopPropagation(); onDeleteConversation(c.id); }}
+                    title="Delete conversation"
+                  >
+                    <IconClose size={12} color="currentColor" />
+                  </span>
                 </button>
               ))}
             </>
