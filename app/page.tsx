@@ -44,14 +44,21 @@ function getTimeString() {
   return new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
 }
 
-// Strip undefined values recursively — Firestore does not accept undefined
-function stripUndefined(obj: any): any {
+// Sanitize data for Firestore: remove undefined and truncate ultra-large base64 image strings to stay under Firestore 1MB limit
+function prepareForFirestore(obj: any): any {
   if (obj === null || obj === undefined) return null;
-  if (Array.isArray(obj)) return obj.map(stripUndefined);
+  if (typeof obj === "string") {
+    if (obj.length > 300000 && obj.startsWith("data:image/")) {
+      // Keep lightweight metadata representation for Firestore storage
+      return obj.slice(0, 100) + "...[truncated]";
+    }
+    return obj;
+  }
+  if (Array.isArray(obj)) return obj.map(prepareForFirestore);
   if (typeof obj === "object") {
     const clean: Record<string, any> = {};
     for (const key of Object.keys(obj)) {
-      if (obj[key] !== undefined) clean[key] = stripUndefined(obj[key]);
+      if (obj[key] !== undefined) clean[key] = prepareForFirestore(obj[key]);
     }
     return clean;
   }
@@ -408,7 +415,7 @@ export default function Home() {
     // Sync to Cloud Firestore if logged in
     if (currentUser) {
       try {
-        await setDoc(doc(db, "users", currentUser.uid, "conversations", convoId), stripUndefined(newOrUpdatedConvo));
+        await setDoc(doc(db, "users", currentUser.uid, "conversations", convoId), prepareForFirestore(newOrUpdatedConvo));
       } catch (err) {
         console.error("Firestore sync error:", err);
       }
@@ -490,7 +497,7 @@ export default function Home() {
       setConversations(updatedConvos.map((c) => c.id === convoId ? finalConvo : c));
 
       if (currentUser) {
-        await setDoc(doc(db, "users", currentUser.uid, "conversations", convoId), stripUndefined(finalConvo));
+        await setDoc(doc(db, "users", currentUser.uid, "conversations", convoId), prepareForFirestore(finalConvo));
       }
     } catch (error: unknown) {
       if (error instanceof Error && error.name === "AbortError") return;

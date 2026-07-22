@@ -3,6 +3,7 @@
 import React, { useRef, useEffect } from "react";
 import { IconSend, IconLoader, IconSparkle, IconCode, IconPencil, IconLightbulb, IconTarget, IconClip, IconMic, IconClose } from "./Icons";
 import { Attachment } from "./ChatInput";
+import { compressImage } from "@/lib/imageUtils";
 
 interface WelcomeScreenProps {
   username: string;
@@ -82,21 +83,23 @@ export default function WelcomeScreen({
     const files = e.target.files;
     if (!files) return;
 
-    Array.from(files).forEach((file) => {
-      const reader = new FileReader();
+    Array.from(files).forEach(async (file) => {
       if (file.type.startsWith("image/")) {
-        reader.onload = (event) => {
-          if (event.target?.result) {
+        try {
+          const compressedData = await compressImage(file);
+          if (compressedData) {
             onAddAttachment({
               id: Math.random().toString(36).substring(2, 9),
               name: file.name,
               type: "image",
-              data: event.target.result as string,
+              data: compressedData,
             });
           }
-        };
-        reader.readAsDataURL(file);
+        } catch (err) {
+          console.error("Image processing error:", err);
+        }
       } else {
+        const reader = new FileReader();
         reader.onload = (event) => {
           if (event.target?.result) {
             onAddAttachment({

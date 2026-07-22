@@ -2,6 +2,7 @@
 
 import React, { useRef, useEffect } from "react";
 import { IconSend, IconLoader, IconClip, IconMic, IconClose } from "./Icons";
+import { compressImage } from "@/lib/imageUtils";
 
 export interface Attachment {
   id: string;
@@ -59,24 +60,25 @@ export default function ChatInput({
     const files = e.target.files;
     if (!files) return;
 
-    Array.from(files).forEach((file) => {
-      const reader = new FileReader();
-
+    Array.from(files).forEach(async (file) => {
       // Check if image
       if (file.type.startsWith("image/")) {
-        reader.onload = (event) => {
-          if (event.target?.result) {
+        try {
+          const compressedData = await compressImage(file);
+          if (compressedData) {
             onAddAttachment({
               id: Math.random().toString(36).substring(2, 9),
               name: file.name,
               type: "image",
-              data: event.target.result as string,
+              data: compressedData,
             });
           }
-        };
-        reader.readAsDataURL(file);
+        } catch (err) {
+          console.error("Image processing error:", err);
+        }
       } else {
         // Read file as text (useful for code / docs)
+        const reader = new FileReader();
         reader.onload = (event) => {
           if (event.target?.result) {
             onAddAttachment({

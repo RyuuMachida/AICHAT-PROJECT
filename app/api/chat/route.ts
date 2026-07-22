@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
       }),
     ];
 
-    const modelName = isVisionNeeded ? "llama-3.2-11b-vision-preview" : "llama-3.3-70b-versatile";
+    const modelName = isVisionNeeded ? "llama-3.2-11b-vision-instruct" : "llama-3.3-70b-versatile";
 
     const stream = await groq.chat.completions.create({
       model: modelName,
