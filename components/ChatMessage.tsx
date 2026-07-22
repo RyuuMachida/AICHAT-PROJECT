@@ -220,7 +220,7 @@ export default function ChatMessage({ role, content, timestamp, attachments, use
   };
 
   return (
-    <div className={`message ${role}`}>
+    <div className={`message ${role} message-enter-animated`}>
       <div className="message-avatar">
         {role === "assistant" ? (
           <IconBot size={16} color="var(--accent)" />

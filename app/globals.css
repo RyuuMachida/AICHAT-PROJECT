@@ -313,7 +313,7 @@ body {
   color: var(--text-muted);
   cursor: pointer;
   padding: 3px 5px;
-  border-radius: 4px;
+  border-radius: 10px;
   transition: all var(--duration-fast);
   flex-shrink: 0;
   display: flex;
@@ -2796,4 +2796,89 @@ body {
   overflow: auto;
   padding: 16px 20px;
 }
+
+/* ── Skeleton Response Loading ── */
+.skeleton-response-container {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  width: 100%;
+  margin-bottom: 24px;
+  animation: fadeIn 0.3s ease;
+}
+
+.skeleton-response-body {
+  flex: 1;
+  max-width: 680px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skeleton-line {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.05) 75%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.6s infinite ease-in-out;
+}
+
+[data-theme="light"] .skeleton-line {
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.04) 25%, rgba(0, 0, 0, 0.1) 50%, rgba(0, 0, 0, 0.04) 75%);
+  background-size: 200% 100%;
+}
+
+.skeleton-line.full { width: 95%; }
+.skeleton-line.long { width: 85%; }
+.skeleton-line.medium { width: 65%; }
+.skeleton-line.short { width: 40%; }
+
+@keyframes skeletonShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton-status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.skeleton-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulse 1.2s infinite ease-in-out;
+}
+
+.skeleton-status-text {
+  font-size: 12px;
+  color: var(--text-dim);
+  font-family: 'Inter', sans-serif;
+}
+
+/* ── Smooth Message Entrance Animation (No abrupt "jleb" pop) ── */
+@keyframes smoothMessageReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.message.message-enter-animated {
+  animation: smoothMessageReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 

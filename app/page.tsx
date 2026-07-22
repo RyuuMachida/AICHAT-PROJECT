@@ -506,8 +506,6 @@ export default function Home() {
 
       const decoder = new TextDecoder();
       let assistantContent = "";
-      const assistantMessage: Message = { role: "assistant", content: "", timestamp: getTimeString() };
-      setMessages([...updatedMessages, assistantMessage]);
 
       while (true) {
         const { done, value } = await reader.read();
@@ -521,7 +519,6 @@ export default function Home() {
               const parsed = JSON.parse(data);
               if (parsed.content) {
                 assistantContent += parsed.content;
-                setMessages([...updatedMessages, { ...assistantMessage, content: assistantContent }]);
               }
               if (parsed.error) throw new Error(parsed.error);
             } catch (e) { if (e instanceof SyntaxError) continue; throw e; }
@@ -529,7 +526,12 @@ export default function Home() {
         }
       }
 
-      const finalMessages = [...updatedMessages, { ...assistantMessage, content: assistantContent }];
+      const assistantMessage: Message = {
+        role: "assistant",
+        content: assistantContent,
+        timestamp: getTimeString()
+      };
+      const finalMessages = [...updatedMessages, assistantMessage];
       setMessages(finalMessages);
 
       const finalConvo = { ...newOrUpdatedConvo, messages: finalMessages };
