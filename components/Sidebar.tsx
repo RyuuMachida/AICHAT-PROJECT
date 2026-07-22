@@ -8,7 +8,6 @@ import {
   IconMore,
   IconLogOut,
   IconSparkle,
-  IconShare,
   IconPin,
   IconPencil,
   IconTrash,
@@ -38,7 +37,6 @@ interface SidebarProps {
   onDeleteConversation: (id: string) => void;
   onRenameConversation: (id: string, newTitle: string) => void;
   onPinConversation: (id: string) => void;
-  onShareConversation: (convo: Conversation) => void;
   onClose: () => void;
   onOpenSettings: () => void;
   username: string;
@@ -68,7 +66,6 @@ function ConvoItem({
   onDelete,
   onRename,
   onPin,
-  onShare,
 }: {
   convo: Conversation;
   isActive: boolean;
@@ -77,7 +74,6 @@ function ConvoItem({
   onDelete: () => void;
   onRename: (newTitle: string) => void;
   onPin: () => void;
-  onShare: () => void;
 }) {
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -125,10 +121,6 @@ function ConvoItem({
 
       {showMenu && !collapsed && (
         <div className="convo-dropdown-menu">
-          <button className="convo-dropdown-item" onClick={(e) => { e.stopPropagation(); setShowMenu(false); onShare(); }}>
-            <IconShare size={15} />
-            <span>Share conversation</span>
-          </button>
           <button className="convo-dropdown-item" onClick={(e) => { e.stopPropagation(); setShowMenu(false); onPin(); }}>
             <IconPin size={15} />
             <span>{convo.pinned ? "Unpin" : "Pin"}</span>
@@ -156,7 +148,6 @@ export default function Sidebar({
   onDeleteConversation,
   onRenameConversation,
   onPinConversation,
-  onShareConversation,
   onClose,
   onOpenSettings,
   username,
@@ -220,7 +211,6 @@ export default function Sidebar({
                   onDelete={() => onDeleteConversation(c.id)}
                   onRename={(newTitle) => onRenameConversation(c.id, newTitle)}
                   onPin={() => onPinConversation(c.id)}
-                  onShare={() => onShareConversation(c)}
                 />
               ))}
             </>
@@ -240,7 +230,6 @@ export default function Sidebar({
                   onDelete={() => onDeleteConversation(c.id)}
                   onRename={(newTitle) => onRenameConversation(c.id, newTitle)}
                   onPin={() => onPinConversation(c.id)}
-                  onShare={() => onShareConversation(c)}
                 />
               ))}
             </>

@@ -8,7 +8,6 @@ import WelcomeScreen from "@/components/WelcomeScreen";
 import Sidebar, { Conversation, MessageAttachment } from "@/components/Sidebar";
 import OnboardingSlides from "@/components/OnboardingSlides";
 import SettingsView from "@/components/SettingsView";
-import ShareModal from "@/components/ShareModal";
 import { IconSparkle } from "@/components/Icons";
 
 // Firebase imports
@@ -85,7 +84,6 @@ export default function Home() {
   const [view, setView] = useState<"chat" | "settings">("chat");
   const [username, setUsername] = useState("User");
   const [email, setEmail] = useState("");
-  const [shareTarget, setShareTarget] = useState<Conversation | null>(null);
 
   // Multimodal state
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -243,10 +241,6 @@ export default function Home() {
       }
     }
   }, [conversations, currentUser]);
-
-  const handleShareConversation = useCallback((convo: Conversation) => {
-    setShareTarget(convo);
-  }, []);
 
   const handleToggleTheme = useCallback(() => {
     setIsDark((prev) => {
@@ -551,9 +545,6 @@ export default function Home() {
   return (
     <div className="app-layout">
       {showOnboarding && <OnboardingSlides onComplete={handleCompleteOnboarding} />}
-      {shareTarget && (
-        <ShareModal convo={shareTarget} onClose={() => setShareTarget(null)} />
-      )}
 
       <Sidebar
         conversations={conversations}
@@ -564,7 +555,6 @@ export default function Home() {
         onDeleteConversation={handleDeleteConversation}
         onRenameConversation={handleRenameConversation}
         onPinConversation={handlePinConversation}
-        onShareConversation={handleShareConversation}
         onClose={() => setSidebarOpen(false)}
         onOpenSettings={() => { setView("settings"); setSidebarOpen(false); }}
         username={username}
