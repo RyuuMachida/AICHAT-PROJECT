@@ -256,40 +256,42 @@ body {
   opacity: 0;
 }
 
+.convo-item-container {
+  position: relative;
+  width: 100%;
+  margin-bottom: 3px;
+}
+
 .conversation-item {
-  padding: 7px 10px;
-  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  border-radius: 9999px;
   cursor: pointer;
-  transition: all var(--duration-fast);
+  transition: all 0.15s ease;
   font-size: 13px;
   color: var(--text-dim);
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
   border: none;
-  background: none;
+  background: transparent;
   width: 100%;
   text-align: left;
   font-family: 'Inter', sans-serif;
-  min-height: 34px;
+  min-height: 36px;
 }
 
 .conversation-item:hover {
-  background: var(--bg-hover);
+  background: #2A2A2A;
   color: var(--text);
 }
 
 .conversation-item.active {
-  background: var(--bg-active);
+  background: #333333;
   color: var(--text);
-}
-
-.conversation-item-icon {
-  flex-shrink: 0;
-  opacity: 0.4;
+  font-weight: 500;
 }
 
 .conversation-item-text {
@@ -304,25 +306,87 @@ body {
   opacity: 0;
 }
 
-.conversation-item-delete {
+.conversation-item-more {
   opacity: 0;
   background: none;
   border: none;
   color: var(--text-muted);
   cursor: pointer;
-  padding: 2px;
+  padding: 3px 5px;
   border-radius: 4px;
   transition: all var(--duration-fast);
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.conversation-item:hover .conversation-item-delete {
+.conversation-item:hover .conversation-item-more,
+.conversation-item.active .conversation-item-more {
   opacity: 1;
 }
 
-.conversation-item-delete:hover {
+.conversation-item-more:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Popover context menu for conversation items */
+.convo-dropdown-menu {
+  position: absolute;
+  top: 40px;
+  right: 6px;
+  z-index: 200;
+  width: 195px;
+  background: #212121;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  animation: scaleUp 0.15s var(--ease-spring);
+}
+
+[data-theme="light"] .convo-dropdown-menu {
+  background: #FFFFFF;
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.convo-dropdown-item {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: background 0.12s ease;
+  text-align: left;
+}
+
+.convo-dropdown-item:hover {
+  background: #2F2F2F;
+}
+
+[data-theme="light"] .convo-dropdown-item:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.convo-dropdown-item.danger {
   color: #ff6b6b;
-  background: rgba(255, 107, 107, 0.1);
+}
+
+.convo-dropdown-item.danger:hover {
+  background: rgba(255, 107, 107, 0.15);
 }
 
 /* ── Profile Footer Area ── */

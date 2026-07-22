@@ -214,6 +214,48 @@ export default function Home() {
     }
   }, [conversations, activeConvoId, currentUser]);
 
+  const handleRenameConversation = useCallback(async (id: string, newTitle: string) => {
+    const updated = conversations.map((c) => (c.id === id ? { ...c, title: newTitle } : c));
+    setConversations(updated);
+
+    const targetConvo = updated.find((c) => c.id === id);
+    if (currentUser && targetConvo) {
+      try {
+        await setDoc(doc(db, "users", currentUser.uid, "conversations", id), prepareForFirestore(targetConvo));
+      } catch (err) {
+        console.error("Error renaming in Firestore:", err);
+      }
+    }
+  }, [conversations, currentUser]);
+
+  const handlePinConversation = useCallback(async (id: string) => {
+    const updated = conversations.map((c) => (c.id === id ? { ...c, pinned: !c.pinned } : c));
+    setConversations(updated);
+
+    const targetConvo = updated.find((c) => c.id === id);
+    if (currentUser && targetConvo) {
+      try {
+        await setDoc(doc(db, "users", currentUser.uid, "conversations", id), prepareForFirestore(targetConvo));
+      } catch (err) {
+        console.error("Error pinning in Firestore:", err);
+      }
+    }
+  }, [conversations, currentUser]);
+
+  const handleShareConversation = useCallback((convo: Conversation) => {
+    const summaryText = `[ChatBot AI - ${convo.title}]\n\n` +
+      convo.messages
+        .map((m) => `${m.role === "user" ? "User" : "AI"}: ${typeof m.content === "string" ? m.content : "[Lampiran/Multimodal]"}`)
+        .join("\n\n");
+
+    try {
+      navigator.clipboard.writeText(summaryText);
+      alert(`Ringkasan percakapan "${convo.title}" telah disalin ke clipboard! Anda dapat membagikannya langsung.`);
+    } catch {
+      alert("Gagal menyalin percakapan ke clipboard.");
+    }
+  }, []);
+
   const handleToggleTheme = useCallback(() => {
     setIsDark((prev) => {
       const next = !prev;
@@ -525,6 +567,9 @@ export default function Home() {
         onNewChat={handleNewChat}
         onSelectConversation={handleSelectConversation}
         onDeleteConversation={handleDeleteConversation}
+        onRenameConversation={handleRenameConversation}
+        onPinConversation={handlePinConversation}
+        onShareConversation={handleShareConversation}
         onClose={() => setSidebarOpen(false)}
         onOpenSettings={() => { setView("settings"); setSidebarOpen(false); }}
         username={username}

@@ -1,7 +1,18 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { IconChat, IconClose, IconPlus, IconGear, IconMore, IconLogOut, IconSparkle } from "./Icons";
+import {
+  IconClose,
+  IconPlus,
+  IconGear,
+  IconMore,
+  IconLogOut,
+  IconSparkle,
+  IconShare,
+  IconPin,
+  IconPencil,
+  IconTrash,
+} from "./Icons";
 
 export interface MessageAttachment {
   id: string;
@@ -15,6 +26,7 @@ export interface Conversation {
   title: string;
   messages: { role: "user" | "assistant"; content: string | any[]; timestamp: string; attachments?: MessageAttachment[] }[];
   createdAt: string;
+  pinned?: boolean;
 }
 
 interface SidebarProps {
@@ -24,6 +36,9 @@ interface SidebarProps {
   onNewChat: () => void;
   onSelectConversation: (id: string) => void;
   onDeleteConversation: (id: string) => void;
+  onRenameConversation: (id: string, newTitle: string) => void;
+  onPinConversation: (id: string) => void;
+  onShareConversation: (convo: Conversation) => void;
   onClose: () => void;
   onOpenSettings: () => void;
   username: string;
@@ -45,6 +60,93 @@ function IconMenu({ size = 20 }: { size?: number }) {
   );
 }
 
+function ConvoItem({
+  convo,
+  isActive,
+  collapsed,
+  onSelect,
+  onDelete,
+  onRename,
+  onPin,
+  onShare,
+}: {
+  convo: Conversation;
+  isActive: boolean;
+  collapsed: boolean;
+  onSelect: () => void;
+  onDelete: () => void;
+  onRename: (newTitle: string) => void;
+  onPin: () => void;
+  onShare: () => void;
+}) {
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleRenameClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowMenu(false);
+    const newTitle = prompt("Masukkan nama percakapan baru:", convo.title);
+    if (newTitle && newTitle.trim()) {
+      onRename(newTitle.trim());
+    }
+  };
+
+  return (
+    <div className="convo-item-container" ref={menuRef}>
+      <button
+        className={`conversation-item ${isActive ? "active" : ""} ${convo.pinned ? "is-pinned" : ""}`}
+        onClick={onSelect}
+        title={convo.title}
+      >
+        <span className="conversation-item-text">{convo.title}</span>
+        {!collapsed && (
+          <span
+            className="conversation-item-more"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowMenu(!showMenu);
+            }}
+            title="Opsi percakapan"
+          >
+            <IconMore size={15} />
+          </span>
+        )}
+      </button>
+
+      {showMenu && !collapsed && (
+        <div className="convo-dropdown-menu">
+          <button className="convo-dropdown-item" onClick={(e) => { e.stopPropagation(); setShowMenu(false); onShare(); }}>
+            <IconShare size={15} />
+            <span>Share conversation</span>
+          </button>
+          <button className="convo-dropdown-item" onClick={(e) => { e.stopPropagation(); setShowMenu(false); onPin(); }}>
+            <IconPin size={15} />
+            <span>{convo.pinned ? "Unpin" : "Pin"}</span>
+          </button>
+          <button className="convo-dropdown-item" onClick={handleRenameClick}>
+            <IconPencil size={15} />
+            <span>Rename</span>
+          </button>
+          <button className="convo-dropdown-item danger" onClick={(e) => { e.stopPropagation(); setShowMenu(false); onDelete(); }}>
+            <IconTrash size={15} />
+            <span>Delete</span>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Sidebar({
   conversations,
   activeId,
@@ -52,6 +154,9 @@ export default function Sidebar({
   onNewChat,
   onSelectConversation,
   onDeleteConversation,
+  onRenameConversation,
+  onPinConversation,
+  onShareConversation,
   onClose,
   onOpenSettings,
   username,
@@ -74,6 +179,9 @@ export default function Sidebar({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const pinnedConvos = conversations.filter((c) => c.pinned);
+  const recentConvos = conversations.filter((c) => !c.pinned);
 
   return (
     <>
@@ -98,28 +206,42 @@ export default function Sidebar({
 
         {/* Conversation list */}
         <div className="sidebar-conversations">
-          {conversations.length > 0 && (
+          {/* Pinned conversations section */}
+          {pinnedConvos.length > 0 && (
             <>
-              <div className="sidebar-section-title">Recent</div>
-              {conversations.map((c) => (
-                <button
+              {!collapsed && <div className="sidebar-section-title">PINNED</div>}
+              {pinnedConvos.map((c) => (
+                <ConvoItem
                   key={c.id}
-                  className={`conversation-item ${activeId === c.id ? "active" : ""}`}
-                  onClick={() => onSelectConversation(c.id)}
-                  title={c.title}
-                >
-                  <span className="conversation-item-icon">
-                    <IconChat size={14} color="currentColor" />
-                  </span>
-                  <span className="conversation-item-text">{c.title}</span>
-                  <span
-                    className="conversation-item-delete"
-                    onClick={(e) => { e.stopPropagation(); onDeleteConversation(c.id); }}
-                    title="Delete conversation"
-                  >
-                    <IconClose size={12} color="currentColor" />
-                  </span>
-                </button>
+                  convo={c}
+                  isActive={c.id === activeId}
+                  collapsed={collapsed}
+                  onSelect={() => onSelectConversation(c.id)}
+                  onDelete={() => onDeleteConversation(c.id)}
+                  onRename={(newTitle) => onRenameConversation(c.id, newTitle)}
+                  onPin={() => onPinConversation(c.id)}
+                  onShare={() => onShareConversation(c)}
+                />
+              ))}
+            </>
+          )}
+
+          {/* Recent conversations section */}
+          {recentConvos.length > 0 && (
+            <>
+              {!collapsed && <div className="sidebar-section-title">RECENTS</div>}
+              {recentConvos.map((c) => (
+                <ConvoItem
+                  key={c.id}
+                  convo={c}
+                  isActive={c.id === activeId}
+                  collapsed={collapsed}
+                  onSelect={() => onSelectConversation(c.id)}
+                  onDelete={() => onDeleteConversation(c.id)}
+                  onRename={(newTitle) => onRenameConversation(c.id, newTitle)}
+                  onPin={() => onPinConversation(c.id)}
+                  onShare={() => onShareConversation(c)}
+                />
               ))}
             </>
           )}
