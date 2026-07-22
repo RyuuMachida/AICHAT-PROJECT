@@ -159,6 +159,7 @@ export default function Sidebar({
   onToggleCollapse,
 }: SidebarProps) {
   const [showMenu, setShowMenu] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -208,7 +209,7 @@ export default function Sidebar({
                   isActive={c.id === activeId}
                   collapsed={collapsed}
                   onSelect={() => onSelectConversation(c.id)}
-                  onDelete={() => onDeleteConversation(c.id)}
+                  onDelete={() => setDeleteConfirmId(c.id)}
                   onRename={(newTitle) => onRenameConversation(c.id, newTitle)}
                   onPin={() => onPinConversation(c.id)}
                 />
@@ -227,7 +228,7 @@ export default function Sidebar({
                   isActive={c.id === activeId}
                   collapsed={collapsed}
                   onSelect={() => onSelectConversation(c.id)}
-                  onDelete={() => onDeleteConversation(c.id)}
+                  onDelete={() => setDeleteConfirmId(c.id)}
                   onRename={(newTitle) => onRenameConversation(c.id, newTitle)}
                   onPin={() => onPinConversation(c.id)}
                 />
@@ -237,7 +238,6 @@ export default function Sidebar({
 
           {conversations.length === 0 && !collapsed && (
             <div style={{ padding: "24px 10px", textAlign: "center", color: "var(--text-muted)", fontSize: 12 }}>
-              <IconSparkle size={20} color="var(--text-muted)" />
               <div style={{ marginTop: 8 }}>No conversations yet</div>
             </div>
           )}
@@ -300,6 +300,22 @@ export default function Sidebar({
           )}
         </div>
       </aside>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmId && (
+        <div className="delete-confirm-overlay" onClick={() => setDeleteConfirmId(null)}>
+          <div className="delete-confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <h3 className="delete-confirm-title">Hapus percakapan?</h3>
+            <p className="delete-confirm-desc">
+              Percakapan ini akan dihapus secara permanen beserta semua pesan di dalamnya.
+            </p>
+            <div className="delete-confirm-actions">
+              <button className="delete-confirm-btn cancel" onClick={() => setDeleteConfirmId(null)}>Cancel</button>
+              <button className="delete-confirm-btn delete" onClick={() => { onDeleteConversation(deleteConfirmId); setDeleteConfirmId(null); }}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

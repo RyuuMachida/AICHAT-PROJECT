@@ -139,9 +139,6 @@ export default function WelcomeScreen({
     <div className="welcome-screen">
       {/* Greeting */}
       <div className="welcome-greeting">
-        <span className="welcome-greeting-icon">
-          <IconSparkle size={36} color="var(--accent)" />
-        </span>
         <h1 className="welcome-title">
           {getGreeting()}, {username}
         </h1>

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { IconSparkle, IconBolt, IconCheck } from "./Icons";
+import { IconSparkle, IconBolt } from "./Icons";
 
 export type AIProvider = "gemini" | "groq";
 
@@ -104,7 +104,7 @@ export default function ModelSelector({
                 <div className="model-item-left">
                   <div className="model-item-title-row">
                     <span className="model-item-title">{cfg.name}</span>
-                    {isSelected && <IconCheck size={14} color="var(--accent)" />}
+                    {isSelected}
                   </div>
                   <span className="model-item-tag">{cfg.tag}</span>
                 </div>
