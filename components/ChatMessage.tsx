@@ -17,6 +17,8 @@ interface ChatMessageProps {
   content: string | any[];
   timestamp?: string;
   attachments?: FileAttachment[];
+  userPhoto?: string | null;
+  username?: string;
 }
 
 // SVG icons for file cards (inline, no emoji)
@@ -129,7 +131,7 @@ function MacTerminalBlock({ language, code }: { language: string; code: string }
   );
 }
 
-export default function ChatMessage({ role, content, timestamp, attachments }: ChatMessageProps) {
+export default function ChatMessage({ role, content, timestamp, attachments, userPhoto, username }: ChatMessageProps) {
   const [copied, setCopied] = React.useState(false);
 
   // Extract text and image urls from possible multimodal message array
@@ -174,8 +176,12 @@ export default function ChatMessage({ role, content, timestamp, attachments }: C
       <div className="message-avatar">
         {role === "assistant" ? (
           <IconBot size={16} color="var(--accent)" />
+        ) : userPhoto ? (
+          <img src={userPhoto} alt={username || "User"} className="user-avatar-img" />
         ) : (
-          <span style={{ fontSize: 12, fontFamily: "'Outfit',sans-serif", fontWeight: 700, color: "#000" }}>U</span>
+          <span style={{ fontSize: 12, fontFamily: "'Outfit',sans-serif", fontWeight: 700, color: "#000" }}>
+            {(username || "U").charAt(0).toUpperCase()}
+          </span>
         )}
       </div>
       <div className="message-content">

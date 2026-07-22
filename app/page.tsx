@@ -529,6 +529,7 @@ export default function Home() {
         onOpenSettings={() => { setView("settings"); setSidebarOpen(false); }}
         username={username}
         email={email}
+        userPhoto={currentUser?.photoURL || null}
         onLogout={handleLogout}
         onChangeAccount={handleChangeAccount}
         collapsed={sidebarCollapsed}
@@ -579,7 +580,15 @@ export default function Home() {
             <div className="chat-container">
               <div className="chat-inner">
                 {messages.map((msg, i) => (
-                  <ChatMessage key={i} role={msg.role} content={msg.content} timestamp={msg.timestamp} attachments={msg.attachments} />
+                  <ChatMessage
+                    key={i}
+                    role={msg.role}
+                    content={msg.content}
+                    timestamp={msg.timestamp}
+                    attachments={msg.attachments}
+                    userPhoto={currentUser?.photoURL || null}
+                    username={username}
+                  />
                 ))}
                 {isLoading && messages[messages.length - 1]?.role === "user" && <TypingIndicator />}
                 <div ref={chatEndRef} />

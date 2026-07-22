@@ -28,6 +28,7 @@ interface SidebarProps {
   onOpenSettings: () => void;
   username: string;
   email: string;
+  userPhoto?: string | null;
   onLogout: () => void;
   onChangeAccount: () => void;
   collapsed: boolean;
@@ -55,6 +56,7 @@ export default function Sidebar({
   onOpenSettings,
   username,
   email,
+  userPhoto,
   onLogout,
   onChangeAccount,
   collapsed,
@@ -63,94 +65,71 @@ export default function Sidebar({
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const todayConvos = conversations.filter((c) => {
-    const d = new Date(c.createdAt);
-    return d.toDateString() === new Date().toDateString();
-  });
-
-  const olderConvos = conversations.filter((c) => {
-    const d = new Date(c.createdAt);
-    return d.toDateString() !== new Date().toDateString();
-  });
-
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setShowMenu(false);
       }
-    }
+    };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   return (
     <>
-      <div className={`sidebar-overlay ${isOpen ? "active" : ""}`} onClick={onClose} />
-      <aside className={`sidebar ${isOpen ? "open" : ""} ${collapsed ? "collapsed" : ""}`}>
+      {isOpen && <div className="sidebar-overlay" onClick={onClose} />}
 
-        {/* Top toolbar: toggle button + brand */}
-        <div className="sidebar-toolbar">
-          <button className="sidebar-toggle-btn" onClick={onToggleCollapse} title={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
-            <IconMenu size={18} />
+      <aside className={`sidebar ${isOpen ? "open" : ""} ${collapsed ? "collapsed" : ""}`}>
+        {/* Sidebar Header */}
+        <div className="sidebar-header">
+          <button className="sidebar-brand-btn" onClick={onNewChat} title="New Chat">
+            <span className="sidebar-logo">AI</span>
+            {!collapsed && <span className="sidebar-brand-name font-serif">ChatBot AI</span>}
           </button>
-          <span className="sidebar-brand">ChatBot AI</span>
+          <div className="sidebar-header-actions">
+            {!collapsed && (
+              <button className="sidebar-icon-btn" onClick={onNewChat} title="Obrolan Baru">
+                <IconPlus size={16} />
+              </button>
+            )}
+            <button className="sidebar-icon-btn collapse-toggle" onClick={onToggleCollapse} title={collapsed ? "Buka Sidebar" : "Tutup Sidebar"}>
+              <IconMenu size={16} />
+            </button>
+            <button className="sidebar-icon-btn mobile-close" onClick={onClose} title="Tutup">
+              <IconClose size={16} />
+            </button>
+          </div>
         </div>
 
-        {/* Primary nav */}
-        <nav className="sidebar-nav">
-          <button className="nav-item primary" onClick={onNewChat}>
-            <span className="nav-item-icon"><IconPlus size={17} color="currentColor" /></span>
-            <span className="nav-item-label">New chat</span>
+        {/* New Chat Button (collapsed state) */}
+        {collapsed && (
+          <button className="sidebar-new-btn-collapsed" onClick={onNewChat} title="Obrolan Baru">
+            <IconPlus size={18} />
           </button>
-        </nav>
+        )}
 
-        {/* Conversations list */}
+        {/* Conversation list */}
         <div className="sidebar-conversations">
-          {todayConvos.length > 0 && (
+          {conversations.length > 0 && (
             <>
-              <div className="sidebar-section-title">Today</div>
-              {todayConvos.map((c) => (
+              {!collapsed && <div className="sidebar-section-title">RECENT</div>}
+              {conversations.map((c) => (
                 <button
                   key={c.id}
-                  className={`conversation-item ${activeId === c.id ? "active" : ""}`}
+                  className={`convo-item ${c.id === activeId ? "active" : ""}`}
                   onClick={() => onSelectConversation(c.id)}
                   title={c.title}
                 >
-                  <span className="conversation-item-icon">
-                    <IconChat size={13} color="currentColor" />
-                  </span>
-                  <span className="conversation-item-text">{c.title}</span>
-                  <span
-                    className="conversation-item-delete"
-                    onClick={(e) => { e.stopPropagation(); onDeleteConversation(c.id); }}
-                  >
-                    <IconClose size={12} color="currentColor" />
-                  </span>
-                </button>
-              ))}
-            </>
-          )}
-
-          {olderConvos.length > 0 && (
-            <>
-              <div className="sidebar-section-title">Earlier</div>
-              {olderConvos.map((c) => (
-                <button
-                  key={c.id}
-                  className={`conversation-item ${activeId === c.id ? "active" : ""}`}
-                  onClick={() => onSelectConversation(c.id)}
-                  title={c.title}
-                >
-                  <span className="conversation-item-icon">
-                    <IconChat size={13} color="currentColor" />
-                  </span>
-                  <span className="conversation-item-text">{c.title}</span>
-                  <span
-                    className="conversation-item-delete"
-                    onClick={(e) => { e.stopPropagation(); onDeleteConversation(c.id); }}
-                  >
-                    <IconClose size={12} color="currentColor" />
-                  </span>
+                  <IconChat size={15} color="currentColor" />
+                  {!collapsed && <span className="convo-item-title">{c.title}</span>}
+                  {!collapsed && (
+                    <span
+                      className="convo-delete-btn"
+                      onClick={(e) => { e.stopPropagation(); onDeleteConversation(c.id); }}
+                    >
+                      <IconClose size={12} color="currentColor" />
+                    </span>
+                  )}
                 </button>
               ))}
             </>
@@ -185,7 +164,13 @@ export default function Sidebar({
           )}
 
           <div className="profile-container">
-            <div className="profile-avatar">{username.charAt(0).toUpperCase()}</div>
+            <div className="profile-avatar">
+              {userPhoto ? (
+                <img src={userPhoto} alt={username} className="profile-avatar-img" />
+              ) : (
+                username.charAt(0).toUpperCase()
+              )}
+            </div>
             <div className="profile-details">
               <span className="profile-name">{username}</span>
               <span className="profile-sub" title={email}>{email || "Tambah email"}</span>
