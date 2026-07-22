@@ -222,7 +222,7 @@ export default function ChatMessage({ role, content, timestamp, attachments, use
 
   return (
     <div className={`message ${role} message-enter-animated`}>
-      <div className="message-avatar">
+      <div className={`message-avatar${role === "assistant" && provider === "groq" ? " ai-avatar-llama" : ""}`}>
         {role === "assistant" ? (
           provider === "groq" ? (
             <img src="/llama.png" alt="Llama" className="ai-model-avatar-img" />

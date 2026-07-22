@@ -9,7 +9,7 @@ interface TypingIndicatorProps {
 export default function TypingIndicator({ provider = "gemini" }: TypingIndicatorProps) {
   return (
     <div className="skeleton-response-container">
-      <div className="message-avatar">
+      <div className={`message-avatar${provider === "groq" ? " ai-avatar-llama" : ""}`}>
         {provider === "groq" ? (
           <img src="/llama.png" alt="Llama" className="ai-model-avatar-img" />
         ) : (
