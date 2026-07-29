@@ -9,7 +9,8 @@ import Sidebar, { Conversation, MessageAttachment } from "@/components/Sidebar";
 import OnboardingSlides from "@/components/OnboardingSlides";
 import SettingsView from "@/components/SettingsView";
 import ModelSelector, { AIProvider } from "@/components/ModelSelector";
-import { IconSparkle } from "@/components/Icons";
+import { IconSparkle, IconLoader } from "@/components/Icons";
+import { audioBufferToWav } from "@/lib/audioUtils";
 
 // Firebase imports
 import { db, auth } from "@/lib/firebase";
@@ -36,6 +37,7 @@ interface Message {
   timestamp: string;
   attachments?: MessageAttachment[]; // file/image attachments stored separately for display
   provider?: "gemini" | "groq"; // which model answered this message
+  groundingSources?: { title: string; url: string }[]; // web search citations from Gemini
 }
 
 function generateId() {
@@ -70,6 +72,21 @@ function prepareForFirestore(obj: any): any {
 const STORAGE_KEY = "chatbot-ai-conversations";
 const THEME_KEY = "chatbot-ai-theme";
 const SIDEBAR_KEY = "chatbot-ai-sidebar-collapsed";
+const LAST_RENAME_KEY = "chatbot-ai-last-rename";
+const RENAME_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000; // 7 days in ms
+
+interface GlobalPopupState {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  type: "alert" | "confirm" | "prompt";
+  inputValue?: string;
+  placeholder?: string;
+  confirmText?: string;
+  cancelText?: string;
+  onConfirm?: (val?: string) => void;
+  onCancel?: () => void;
+}
 
 export default function Home() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -83,11 +100,66 @@ export default function Home() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [setupError, setSetupError] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [authChecking, setAuthChecking] = useState(true);
   const [view, setView] = useState<"chat" | "settings">("chat");
   const [username, setUsername] = useState("User");
   const [email, setEmail] = useState("");
   const [provider, setProvider] = useState<AIProvider>("gemini");
   const [requestHistory, setRequestHistory] = useState<number[]>([]);
+  const [lastRenameTimestamp, setLastRenameTimestamp] = useState<number | null>(null);
+  const [userCharacteristics, setUserCharacteristics] = useState<string>("");
+
+  // Global Popup Modal state
+  const [popup, setPopup] = useState<GlobalPopupState>({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "alert",
+  });
+
+  const showCustomAlert = useCallback((title: string, message: string) => {
+    setPopup({
+      isOpen: true,
+      title,
+      message,
+      type: "alert",
+      confirmText: "OK",
+      onConfirm: () => setPopup((prev) => ({ ...prev, isOpen: false })),
+    });
+  }, []);
+
+  const showCustomConfirm = useCallback((title: string, message: string, onConfirmAction: () => void) => {
+    setPopup({
+      isOpen: true,
+      title,
+      message,
+      type: "confirm",
+      confirmText: "Ya, Lanjutkan",
+      cancelText: "Batal",
+      onConfirm: () => {
+        setPopup((prev) => ({ ...prev, isOpen: false }));
+        onConfirmAction();
+      },
+      onCancel: () => setPopup((prev) => ({ ...prev, isOpen: false })),
+    });
+  }, []);
+
+  const showCustomPrompt = useCallback((title: string, message: string, initialVal: string, onConfirmAction: (val: string) => void) => {
+    setPopup({
+      isOpen: true,
+      title,
+      message,
+      type: "prompt",
+      inputValue: initialVal,
+      confirmText: "Simpan",
+      cancelText: "Batal",
+      onConfirm: (val) => {
+        setPopup((prev) => ({ ...prev, isOpen: false }));
+        if (val !== undefined && val.trim()) onConfirmAction(val.trim());
+      },
+      onCancel: () => setPopup((prev) => ({ ...prev, isOpen: false })),
+    });
+  }, []);
 
   const handleSelectProvider = useCallback((prov: AIProvider) => {
     setProvider(prov);
@@ -102,6 +174,10 @@ export default function Home() {
   const abortControllerRef = useRef<AbortController | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const scriptProcessorRef = useRef<ScriptProcessorNode | null>(null);
+  const pcmChunksRef = useRef<Float32Array[]>([]);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
 
   // 1. Firebase Authentication Listener & Redirect Checker
   useEffect(() => {
@@ -114,6 +190,9 @@ export default function Home() {
     const savedCollapsed = localStorage.getItem(SIDEBAR_KEY);
     if (savedCollapsed === "true") setSidebarCollapsed(true);
 
+    const savedLastRename = localStorage.getItem(LAST_RENAME_KEY);
+    if (savedLastRename) setLastRenameTimestamp(Number(savedLastRename));
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setCurrentUser(user);
@@ -123,8 +202,11 @@ export default function Home() {
         // Load custom settings from firestore if exists
         const userDocRef = doc(db, "users", user.uid);
         const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists() && userDoc.data().username) {
-          setUsername(userDoc.data().username);
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          if (data.username) setUsername(data.username);
+          if (data.lastRenameTimestamp) setLastRenameTimestamp(data.lastRenameTimestamp);
+          if (data.userCharacteristics) setUserCharacteristics(data.userCharacteristics);
         }
 
         // Sync conversations list from Cloud Firestore
@@ -151,6 +233,7 @@ export default function Home() {
         setEmail("");
         setShowOnboarding(true);
       }
+      setAuthChecking(false);
     });
 
     // Check for Firebase Auth passwordless email link
@@ -158,7 +241,18 @@ export default function Home() {
       if (isSignInWithEmailLink(auth, window.location.href)) {
         let savedEmail = window.localStorage.getItem("emailForSignIn");
         if (!savedEmail) {
-          savedEmail = window.prompt("Harap masukkan email verifikasi Anda kembali:");
+          showCustomPrompt("Verifikasi Email", "Harap masukkan email verifikasi Anda kembali:", "", async (inputEmail) => {
+            if (inputEmail) {
+              try {
+                await signInWithEmailLink(auth, inputEmail, window.location.href);
+                window.localStorage.removeItem("emailForSignIn");
+              } catch (e) {
+                console.error("Email link login error:", e);
+                showCustomAlert("Verifikasi Gagal", "Tautan verifikasi kedaluwarsa atau tidak valid.");
+              }
+            }
+          });
+          return;
         }
         if (savedEmail) {
           try {
@@ -166,7 +260,7 @@ export default function Home() {
             window.localStorage.removeItem("emailForSignIn");
           } catch (e) {
             console.error("Email link login error:", e);
-            alert("Tautan verifikasi kedaluwarsa atau tidak valid.");
+            showCustomAlert("Verifikasi Gagal", "Tautan verifikasi kedaluwarsa atau tidak valid.");
           }
         }
       }
@@ -174,11 +268,87 @@ export default function Home() {
     handleEmailLinkSignIn();
 
     return () => unsubscribe();
-  }, []);
+  }, [showCustomAlert, showCustomPrompt]);
 
   useEffect(() => {
     if (view === "chat") chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading, view]);
+
+  // 7-day cooldown helper
+  const getRenameCooldownInfo = useCallback((): { days: number; hours: number } | null => {
+    if (!lastRenameTimestamp) return null;
+    const elapsed = Date.now() - lastRenameTimestamp;
+    if (elapsed >= RENAME_COOLDOWN_MS) return null;
+    const msLeft = RENAME_COOLDOWN_MS - elapsed;
+    const totalHours = Math.ceil(msLeft / (1000 * 60 * 60));
+    const days = Math.floor(totalHours / 24);
+    const hours = totalHours % 24;
+    return { days, hours };
+  }, [lastRenameTimestamp]);
+
+  const handleSaveUsernameWithCooldown = async (newName: string) => {
+    const info = getRenameCooldownInfo();
+    if (info !== null) {
+      showCustomAlert(
+        "Pembatasan Ganti Nama",
+        `Anda hanya dapat mengganti atau mereset nama profil 1 kali setiap 7 hari. Coba lagi dalam jeda : ${info.days} hari ${info.hours} jam.`
+      );
+      return;
+    }
+
+    const now = Date.now();
+    setLastRenameTimestamp(now);
+    localStorage.setItem(LAST_RENAME_KEY, String(now));
+    await handleUsernameChange(newName);
+
+    if (currentUser) {
+      try {
+        await setDoc(doc(db, "users", currentUser.uid), { lastRenameTimestamp: now }, { merge: true });
+      } catch (err) {
+        console.error("Error saving rename timestamp:", err);
+      }
+    }
+
+    showCustomAlert("Nama Berhasil Diubah", `Nama tampilan Anda kini menjadi "${newName}".`);
+  };
+
+  const handleResetGoogleName = async () => {
+    const googleName = currentUser?.displayName || auth.currentUser?.displayName;
+    if (!googleName) {
+      showCustomAlert("Info", "Tidak dapat menemukan nama bawaan dari akun Google Anda.");
+      return;
+    }
+
+    const info = getRenameCooldownInfo();
+    if (info !== null) {
+      showCustomAlert(
+        "Pembatasan Reset Nama",
+        `Anda hanya dapat mengganti atau mereset nama profil 1 kali setiap 7 hari. Coba lagi dalam jeda : ${info.days} hari ${info.hours} jam.`
+      );
+      return;
+    }
+
+    showCustomConfirm(
+      "Reset Nama ke Default Google?",
+      `Apakah Anda yakin ingin mereset nama tampilan Anda kembali ke nama akun Google (${googleName})?`,
+      async () => {
+        const now = Date.now();
+        setLastRenameTimestamp(now);
+        localStorage.setItem(LAST_RENAME_KEY, String(now));
+        await handleUsernameChange(googleName);
+
+        if (currentUser) {
+          try {
+            await setDoc(doc(db, "users", currentUser.uid), { lastRenameTimestamp: now }, { merge: true });
+          } catch (err) {
+            console.error("Error saving rename timestamp:", err);
+          }
+        }
+
+        showCustomAlert("Nama Direset", `Nama tampilan telah direset ke nama Google (${googleName}).`);
+      }
+    );
+  };
 
   // 2. Action Handlers (Firebase DB sync replacements)
   const handleNewChat = useCallback(() => {
@@ -237,19 +407,32 @@ export default function Home() {
     }
   }, [conversations, currentUser]);
 
+  const MAX_PINNED_CONVERSATIONS = 5;
+
   const handlePinConversation = useCallback(async (id: string) => {
+    const targetConvo = conversations.find((c) => c.id === id);
+    const currentlyPinnedCount = conversations.filter((c) => c.pinned).length;
+
+    if (targetConvo && !targetConvo.pinned && currentlyPinnedCount >= MAX_PINNED_CONVERSATIONS) {
+      showCustomAlert(
+        "Batas Pin Percakapan",
+        `Batas maksimal percakapan tersemat (pinned) adalah ${MAX_PINNED_CONVERSATIONS}. Silakan unpin salah satu percakapan terlebih dahulu.`
+      );
+      return;
+    }
+
     const updated = conversations.map((c) => (c.id === id ? { ...c, pinned: !c.pinned } : c));
     setConversations(updated);
 
-    const targetConvo = updated.find((c) => c.id === id);
-    if (currentUser && targetConvo) {
+    const updatedTarget = updated.find((c) => c.id === id);
+    if (currentUser && updatedTarget) {
       try {
-        await setDoc(doc(db, "users", currentUser.uid, "conversations", id), prepareForFirestore(targetConvo));
+        await setDoc(doc(db, "users", currentUser.uid, "conversations", id), prepareForFirestore(updatedTarget));
       } catch (err) {
         console.error("Error pinning in Firestore:", err);
       }
     }
-  }, [conversations, currentUser]);
+  }, [conversations, currentUser, showCustomAlert]);
 
   const handleToggleTheme = useCallback(() => {
     setIsDark((prev) => {
@@ -283,19 +466,20 @@ export default function Home() {
   };
 
   const handleLogout = async () => {
-    if (confirm("Keluar dari akun Anda?")) {
+    showCustomConfirm("Keluar Akun", "Apakah Anda yakin ingin keluar dari akun Anda?", async () => {
       try {
         await signOut(auth);
         setView("chat");
       } catch (err) {
         console.error("Sign out error:", err);
       }
-    }
+    });
   };
 
   const handleChangeAccount = () => {
-    const newName = prompt("Masukkan nama tampilan baru:", username);
-    if (newName !== null) handleUsernameChange(newName);
+    showCustomPrompt("Ganti Nama Tampilan", "Masukkan nama tampilan baru Anda:", username, (newName) => {
+      if (newName) handleSaveUsernameWithCooldown(newName);
+    });
   };
 
   const handleCompleteOnboarding = async (newName: string, newEmail: string) => {
@@ -316,22 +500,53 @@ export default function Home() {
     setShowOnboarding(false);
   };
 
-  // Recording Handlers
+  // Recording Handlers (Modern MediaRecorder API)
   const handleStartRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      if (typeof window !== "undefined" && (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia)) {
+        showCustomAlert(
+          "Akses Mikrofon Diblokir Browser",
+          "Browser memblokir izin mikrofon pada akses IP HTTP (misal http://10.51.52.147:3000) demi keamanan. Untuk menggunakan mikrofon di HP, silakan buka aplikasi melalui HTTPS atau via http://localhost."
+        );
+        return;
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+
+      let mimeType = "audio/webm";
+      if (typeof MediaRecorder !== "undefined") {
+        if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
+          mimeType = "audio/webm;codecs=opus";
+        } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
+          mimeType = "audio/mp4";
+        }
+      }
+
+      const mediaRecorder = new MediaRecorder(stream, { mimeType });
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
       mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
+        if (event.data && event.data.size > 0) {
           audioChunksRef.current.push(event.data);
         }
       };
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+
+        if (audioBlob.size < 500) {
+          showCustomAlert("Suara Tidak Terdeteksi", "Rekaman suara terlalu pendek atau tidak terdeteksi. Silakan coba bicara lagi.");
+          stream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+
         setIsLoading(true);
 
         const formData = new FormData();
@@ -346,12 +561,14 @@ export default function Home() {
           if (!response.ok) throw new Error("Gagal melakukan transkripsi.");
 
           const data = await response.json();
-          if (data.text) {
-            setInput((prev) => (prev ? prev + " " + data.text : data.text));
+          if (data.text && data.text.trim()) {
+            setInput((prev) => (prev ? prev + " " + data.text.trim() : data.text.trim()));
+          } else {
+            showCustomAlert("Suara Tidak Terdeteksi", "Tidak ada kata yang terdeteksi dalam rekaman suara Anda. Silakan coba bicara lebih jelas.");
           }
         } catch (e) {
           console.error("Transcription error:", e);
-          alert("Gagal menerjemahkan rekaman suara Anda.");
+          showCustomAlert("Error Transkripsi", "Gagal menerjemahkan rekaman suara Anda.");
         } finally {
           setIsLoading(false);
         }
@@ -359,11 +576,11 @@ export default function Home() {
         stream.getTracks().forEach((track) => track.stop());
       };
 
-      mediaRecorder.start();
+      mediaRecorder.start(200);
       setIsRecording(true);
     } catch (err) {
       console.error("Audio recording permission error:", err);
-      alert("Tidak dapat mengakses mikrofon Anda.");
+      showCustomAlert("Akses Mikrofon", "Tidak dapat mengakses mikrofon Anda. Pastikan izin mikrofon telah diberikan.");
     }
   };
 
@@ -493,7 +710,12 @@ export default function Home() {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers,
-        body: JSON.stringify({ messages: apiMessages, provider }),
+        body: JSON.stringify({
+          messages: apiMessages,
+          provider,
+          username,
+          userCharacteristics,
+        }),
         signal: controller.signal,
       });
 
@@ -508,6 +730,7 @@ export default function Home() {
 
       const decoder = new TextDecoder();
       let assistantContent = "";
+      let groundingSources: { title: string; url: string }[] = [];
 
       while (true) {
         const { done, value } = await reader.read();
@@ -522,6 +745,10 @@ export default function Home() {
               if (parsed.content) {
                 assistantContent += parsed.content;
               }
+              // Tangkap grounding sources dari Gemini Search
+              if (parsed.sources && Array.isArray(parsed.sources)) {
+                groundingSources = parsed.sources;
+              }
               if (parsed.error) throw new Error(parsed.error);
             } catch (e) { if (e instanceof SyntaxError) continue; throw e; }
           }
@@ -533,6 +760,7 @@ export default function Home() {
         content: assistantContent,
         timestamp: getTimeString(),
         provider,
+        ...(groundingSources.length > 0 && { groundingSources }),
       };
       const finalMessages = [...updatedMessages, assistantMessage];
       setMessages(finalMessages);
@@ -542,6 +770,25 @@ export default function Home() {
 
       if (currentUser) {
         await setDoc(doc(db, "users", currentUser.uid, "conversations", convoId), prepareForFirestore(finalConvo));
+
+        // Asynchronously extract & save AI memory characteristics to Firestore
+        fetch("/api/extract-characteristics", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            messages: finalMessages,
+            existingCharacteristics: userCharacteristics,
+            username,
+          }),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.characteristics && data.characteristics !== userCharacteristics) {
+              setUserCharacteristics(data.characteristics);
+              setDoc(doc(db, "users", currentUser.uid), { userCharacteristics: data.characteristics }, { merge: true }).catch(console.error);
+            }
+          })
+          .catch((err) => console.error("Error updating user memory characteristics:", err));
       }
     } catch (error: unknown) {
       if (error instanceof Error && error.name === "AbortError") return;
@@ -557,11 +804,37 @@ export default function Home() {
     }
   }, [input, isLoading, messages, activeConvoId, conversations, attachments, currentUser, provider]);
 
+  if (authChecking) {
+    return (
+      <div className="auth-loading-screen" style={{ display: "flex", height: "100vh", alignItems: "center", justifyContent: "center", background: "var(--bg-main)", color: "var(--text)" }}>
+        <IconLoader size={32} className="spin" />
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return (
+      <OnboardingSlides
+        onComplete={handleCompleteOnboarding}
+        isLoggedIn={false}
+        currentUsername={username}
+        currentEmail={email}
+      />
+    );
+  }
+
   const inConversation = messages.length > 0 || setupError;
 
   return (
     <div className="app-layout">
-      {showOnboarding && <OnboardingSlides onComplete={handleCompleteOnboarding} />}
+      {showOnboarding && (
+        <OnboardingSlides
+          onComplete={handleCompleteOnboarding}
+          isLoggedIn={true}
+          currentUsername={username}
+          currentEmail={email}
+        />
+      )}
 
       <Sidebar
         conversations={conversations}
@@ -587,7 +860,9 @@ export default function Home() {
         {view === "settings" ? (
           <SettingsView
             username={username}
-            onUsernameChange={handleUsernameChange}
+            userPhoto={currentUser?.photoURL || null}
+            onSaveUsername={handleSaveUsernameWithCooldown}
+            onResetGoogleName={handleResetGoogleName}
             email={email}
             onEmailChange={(val) => {
               setEmail(val);
@@ -599,6 +874,8 @@ export default function Home() {
             onToggleTheme={handleToggleTheme}
             onOpenOnboarding={() => setShowOnboarding(true)}
             onBackToChat={() => setView("chat")}
+            renameCooldownInfo={getRenameCooldownInfo()}
+            googleDefaultName={currentUser?.displayName || auth.currentUser?.displayName || null}
           />
         ) : !inConversation ? (
           /* Claude-style welcome with centered input */
@@ -641,6 +918,7 @@ export default function Home() {
                     userPhoto={currentUser?.photoURL || null}
                     username={username}
                     provider={msg.provider || provider}
+                    groundingSources={msg.groundingSources}
                   />
                 ))}
                 {isLoading && messages[messages.length - 1]?.role === "user" && <TypingIndicator provider={provider} />}
@@ -664,6 +942,54 @@ export default function Home() {
           </>
         )}
       </div>
+
+      {/* Global Custom Popup / Alert / Confirm Modal */}
+      {popup.isOpen && (
+        <div
+          className="custom-popup-overlay"
+          onClick={() => {
+            if (popup.type === "alert") {
+              popup.onConfirm?.();
+            } else {
+              popup.onCancel?.();
+            }
+          }}
+        >
+          <div className="custom-popup-modal" onClick={(e) => e.stopPropagation()}>
+            <h3 className="custom-popup-title">{popup.title}</h3>
+            <p className="custom-popup-desc">{popup.message}</p>
+
+            {popup.type === "prompt" && (
+              <input
+                type="text"
+                className="custom-popup-input"
+                value={popup.inputValue || ""}
+                onChange={(e) => setPopup((prev) => ({ ...prev, inputValue: e.target.value }))}
+                placeholder={popup.placeholder || "Masukkan teks..."}
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && popup.onConfirm) popup.onConfirm(popup.inputValue);
+                  if (e.key === "Escape" && popup.onCancel) popup.onCancel();
+                }}
+              />
+            )}
+
+            <div className="custom-popup-actions">
+              {popup.type !== "alert" && (
+                <button className="custom-popup-btn cancel" onClick={popup.onCancel}>
+                  {popup.cancelText || "Batal"}
+                </button>
+              )}
+              <button
+                className="custom-popup-btn confirm"
+                onClick={() => popup.onConfirm && popup.onConfirm(popup.inputValue)}
+              >
+                {popup.confirmText || "OK"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

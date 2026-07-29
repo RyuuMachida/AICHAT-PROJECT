@@ -64,7 +64,7 @@ function ConvoItem({
   collapsed,
   onSelect,
   onDelete,
-  onRename,
+  onOpenRename,
   onPin,
 }: {
   convo: Conversation;
@@ -72,7 +72,7 @@ function ConvoItem({
   collapsed: boolean;
   onSelect: () => void;
   onDelete: () => void;
-  onRename: (newTitle: string) => void;
+  onOpenRename: (convo: Conversation) => void;
   onPin: () => void;
 }) {
   const [showMenu, setShowMenu] = useState(false);
@@ -91,10 +91,7 @@ function ConvoItem({
   const handleRenameClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowMenu(false);
-    const newTitle = prompt("Masukkan nama percakapan baru:", convo.title);
-    if (newTitle && newTitle.trim()) {
-      onRename(newTitle.trim());
-    }
+    onOpenRename(convo);
   };
 
   return (
@@ -104,6 +101,11 @@ function ConvoItem({
         onClick={onSelect}
         title={convo.title}
       >
+        {convo.pinned && (
+          <span className="convo-pin-icon" title="Pinned conversation">
+            <IconPin size={13} />
+          </span>
+        )}
         <span className="conversation-item-text">{convo.title}</span>
         {!collapsed && (
           <span
@@ -160,6 +162,8 @@ export default function Sidebar({
 }: SidebarProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [renameConvo, setRenameConvo] = useState<Conversation | null>(null);
+  const [renameTitleInput, setRenameTitleInput] = useState("");
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -171,6 +175,18 @@ export default function Sidebar({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const handleOpenRenameModal = (convo: Conversation) => {
+    setRenameConvo(convo);
+    setRenameTitleInput(convo.title);
+  };
+
+  const handleConfirmRename = () => {
+    if (renameConvo && renameTitleInput.trim()) {
+      onRenameConversation(renameConvo.id, renameTitleInput.trim());
+      setRenameConvo(null);
+    }
+  };
 
   const pinnedConvos = conversations.filter((c) => c.pinned);
   const recentConvos = conversations.filter((c) => !c.pinned);
@@ -201,7 +217,7 @@ export default function Sidebar({
           {/* Pinned conversations section */}
           {pinnedConvos.length > 0 && (
             <>
-              {!collapsed && <div className="sidebar-section-title">PINNED</div>}
+              {!collapsed && <div className="sidebar-section-title">PINNED ({pinnedConvos.length}/5)</div>}
               {pinnedConvos.map((c) => (
                 <ConvoItem
                   key={c.id}
@@ -210,7 +226,7 @@ export default function Sidebar({
                   collapsed={collapsed}
                   onSelect={() => onSelectConversation(c.id)}
                   onDelete={() => setDeleteConfirmId(c.id)}
-                  onRename={(newTitle) => onRenameConversation(c.id, newTitle)}
+                  onOpenRename={handleOpenRenameModal}
                   onPin={() => onPinConversation(c.id)}
                 />
               ))}
@@ -229,7 +245,7 @@ export default function Sidebar({
                   collapsed={collapsed}
                   onSelect={() => onSelectConversation(c.id)}
                   onDelete={() => setDeleteConfirmId(c.id)}
-                  onRename={(newTitle) => onRenameConversation(c.id, newTitle)}
+                  onOpenRename={handleOpenRenameModal}
                   onPin={() => onPinConversation(c.id)}
                 />
               ))}
@@ -300,6 +316,42 @@ export default function Sidebar({
           )}
         </div>
       </aside>
+
+      {/* Custom Rename Conversation Modal */}
+      {renameConvo && (
+        <div className="custom-popup-overlay" onClick={() => setRenameConvo(null)}>
+          <div className="custom-popup-modal" onClick={(e) => e.stopPropagation()}>
+            <h3 className="custom-popup-title">Edit Judul Percakapan</h3>
+            <p className="custom-popup-desc">
+              Masukkan nama percakapan baru untuk memperbarui riwayat chat Anda:
+            </p>
+            <input
+              type="text"
+              className="custom-popup-input"
+              value={renameTitleInput}
+              onChange={(e) => setRenameTitleInput(e.target.value)}
+              placeholder="Nama percakapan..."
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleConfirmRename();
+                if (e.key === "Escape") setRenameConvo(null);
+              }}
+            />
+            <div className="custom-popup-actions">
+              <button className="custom-popup-btn cancel" onClick={() => setRenameConvo(null)}>
+                Cancel
+              </button>
+              <button
+                className="custom-popup-btn confirm"
+                onClick={handleConfirmRename}
+                disabled={!renameTitleInput.trim()}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       {deleteConfirmId && (

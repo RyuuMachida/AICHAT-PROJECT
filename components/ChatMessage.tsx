@@ -20,6 +20,7 @@ interface ChatMessageProps {
   userPhoto?: string | null;
   username?: string;
   provider?: "gemini" | "groq";
+  groundingSources?: { title: string; url: string }[];
 }
 
 // SVG icons for file cards (inline, no emoji)
@@ -180,7 +181,7 @@ function MacTerminalBlock({ language, code }: { language: string; code: string }
   );
 }
 
-export default function ChatMessage({ role, content, timestamp, attachments, userPhoto, username, provider = "gemini" }: ChatMessageProps) {
+export default function ChatMessage({ role, content, timestamp, attachments, userPhoto, username, provider = "gemini", groundingSources }: ChatMessageProps) {
   const [copied, setCopied] = React.useState(false);
 
   // Extract text and image urls from possible multimodal message array
@@ -300,6 +301,39 @@ export default function ChatMessage({ role, content, timestamp, attachments, use
             )}
             {timestamp && <span className="message-time-inline">{timestamp}</span>}
           </div>
+
+          {/* Grounding Sources — muncul kalau Gemini melakukan web search */}
+          {role === "assistant" && groundingSources && groundingSources.length > 0 && (
+            <div className="grounding-sources">
+              <div className="grounding-sources-header">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <span>Sumber dari web</span>
+              </div>
+              <div className="grounding-sources-list">
+                {groundingSources.map((src, i) => (
+                  <a
+                    key={i}
+                    href={src.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="grounding-source-chip"
+                    title={src.url}
+                  >
+                    <img
+                      src={`https://www.google.com/s2/favicons?domain=${new URL(src.url).hostname}&sz=16`}
+                      alt=""
+                      className="grounding-favicon"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                    />
+                    <span>{src.title}</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -171,14 +171,19 @@ export default function WelcomeScreen({
         )}
 
         {isRecording ? (
-          <div className="recording-wave-container" style={{ margin: "24px 0" }}>
-            <div className="recording-pulse-dots">
-              <div className="pulse-dot" />
-              <div className="pulse-dot" />
-              <div className="pulse-dot" />
-              <div className="pulse-dot" />
+          <div className="recording-wave-container" style={{ margin: "16px 0" }}>
+            <div className="recording-badge">
+              <span className="recording-indicator-dot" />
+              <span className="recording-status-text">Merekam Suara...</span>
             </div>
-            <span className="recording-label">Sedang merekam suara Anda...</span>
+            <div className="recording-soundwave-bars">
+              <span className="soundwave-bar bar-1" />
+              <span className="soundwave-bar bar-2" />
+              <span className="soundwave-bar bar-3" />
+              <span className="soundwave-bar bar-4" />
+              <span className="soundwave-bar bar-5" />
+            </div>
+            <span className="recording-hint">Klik tombol mikrofon lagi untuk selesai</span>
           </div>
         ) : (
           <textarea
@@ -229,7 +234,7 @@ export default function WelcomeScreen({
               disabled={isLoading && !isRecording}
               style={{ marginRight: 6 }}
             >
-              <IconMic size={16} color={isRecording ? "#000" : "currentColor"} />
+              <IconMic size={16} color="currentColor" />
             </button>
 
             {!isRecording && (

@@ -7,12 +7,20 @@ import { signInWithPopup, GoogleAuthProvider, sendSignInLinkToEmail } from "fire
 
 interface OnboardingSlidesProps {
   onComplete: (name: string, email: string) => void;
+  isLoggedIn?: boolean;
+  currentUsername?: string;
+  currentEmail?: string;
 }
 
-export default function OnboardingSlides({ onComplete }: OnboardingSlidesProps) {
+export default function OnboardingSlides({
+  onComplete,
+  isLoggedIn = false,
+  currentUsername = "User",
+  currentEmail = "",
+}: OnboardingSlidesProps) {
   const [slide, setSlide] = useState(0);
-  const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
+  const [email, setEmail] = useState(currentEmail);
+  const [name, setName] = useState(currentUsername);
   const [improveModels, setImproveModels] = useState(true);
   const [emailSent, setEmailSent] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -55,16 +63,12 @@ export default function OnboardingSlides({ onComplete }: OnboardingSlidesProps) 
     setLoading(true);
     try {
       const actionCodeSettings = {
-        // Redirect back to our homepage to complete verification
         url: window.location.origin + "/",
         handleCodeInApp: true,
       };
 
       await sendSignInLinkToEmail(auth, email.trim(), actionCodeSettings);
-      
-      // Save the email locally so we don't have to ask for it again upon redirect
       window.localStorage.setItem("emailForSignIn", email.trim());
-      
       setEmailSent(true);
     } catch (error: any) {
       console.error("Email link send error:", error);
@@ -91,7 +95,15 @@ export default function OnboardingSlides({ onComplete }: OnboardingSlidesProps) 
   };
 
   const handleInfoSubmit = () => {
-    onComplete(name.trim() || "User", email.trim() || "tamu@gmail.com");
+    onComplete(isLoggedIn ? currentUsername : (name.trim() || "User"), isLoggedIn ? currentEmail : (email.trim() || "tamu@gmail.com"));
+  };
+
+  const handleNextFromWelcome = () => {
+    if (isLoggedIn) {
+      setSlide(3); // Skip login slides and go directly to feature guide!
+    } else {
+      setSlide(1);
+    }
   };
 
   return (
@@ -143,17 +155,17 @@ export default function OnboardingSlides({ onComplete }: OnboardingSlidesProps) 
             </div>
 
             <button
-              onClick={() => setSlide(1)}
+              onClick={handleNextFromWelcome}
               className="ob-btn-primary"
               style={{ marginTop: "12px" }}
             >
-              Mulai Sekarang
+              {isLoggedIn ? "Lihat Panduan Fitur" : "Mulai Sekarang"}
             </button>
           </div>
         )}
 
-        {/* Slide 1: Auth Page (Google popup or passwordless email) */}
-        {slide === 1 && (
+        {/* Slide 1: Auth Page (Only shown if NOT logged in) */}
+        {slide === 1 && !isLoggedIn && (
           <div className="ob-slide" key="auth">
             <h1 className="ob-title font-serif">Question what's next</h1>
             <p className="ob-desc">Your thinking partner for big ambitions</p>
@@ -221,8 +233,8 @@ export default function OnboardingSlides({ onComplete }: OnboardingSlidesProps) 
           </div>
         )}
 
-        {/* Slide 2: What's your name? (Hanya muncul jika register via email link redirect) */}
-        {slide === 2 && (
+        {/* Slide 2: What's your name? (Only shown if NOT logged in) */}
+        {slide === 2 && !isLoggedIn && (
           <div className="ob-slide" key="name">
             <h1 className="ob-title font-serif">What's your name?</h1>
             <p className="ob-desc">So Chatbot knows what to call you.</p>
@@ -249,11 +261,11 @@ export default function OnboardingSlides({ onComplete }: OnboardingSlidesProps) 
           </div>
         )}
 
-        {/* Slide 3: Before your first chat */}
+        {/* Slide 3: Before your first chat / Fitur Utama */}
         {slide === 3 && (
           <div className="ob-slide" key="before-chat" style={{ maxWidth: "480px" }}>
-            <h1 className="ob-title font-serif">Before your first chat</h1>
-            <p className="ob-desc">A few things to know, plus one setting to review</p>
+            <h1 className="ob-title font-serif">Fitur & Keunggulan ChatBot AI</h1>
+            <p className="ob-desc">Informasi dan pengaturan sebelum memulai percakapan Anda</p>
 
             <div className="ob-info-box" style={{ marginTop: 16 }}>
               {/* Item 1 */}
@@ -264,7 +276,7 @@ export default function OnboardingSlides({ onComplete }: OnboardingSlidesProps) 
                   </svg>
                 </div>
                 <div className="ob-info-content">
-                  <strong>Ad-free chats:</strong> We won't show you ads or let advertisers influence what Claude says.
+                  <strong>Tanpa Iklan:</strong> Percakapan bersih tanpa gangguan iklan komersial.
                 </div>
               </div>
 
@@ -276,7 +288,7 @@ export default function OnboardingSlides({ onComplete }: OnboardingSlidesProps) 
                   </svg>
                 </div>
                 <div className="ob-info-content">
-                  <strong>Built to help, not harm:</strong> Automated safeguards protect your chats from violent, abusive, or deceptive content.
+                  <strong>Aman & Terjaga:</strong> Sistem keamanan otomatis melindungi riwayat percakapan Anda.
                 </div>
               </div>
 
@@ -289,7 +301,7 @@ export default function OnboardingSlides({ onComplete }: OnboardingSlidesProps) 
                     </svg>
                   </div>
                   <div className="ob-info-content">
-                    <strong>Help improve our AI models:</strong> Allow the use of your chats and coding sessions to train and improve AI models.
+                    <strong>Bantu Tingkatkan Model AI:</strong> Izinkan penggunaan riwayat chat untuk pengembangan AI.
                   </div>
                 </div>
                 <div className="ob-toggle-wrapper">
@@ -310,7 +322,7 @@ export default function OnboardingSlides({ onComplete }: OnboardingSlidesProps) 
               className="ob-btn-primary"
               style={{ marginTop: 24 }}
             >
-              Continue
+              {isLoggedIn ? "Tutup Panduan" : "Selesai & Mulai Chat"}
             </button>
           </div>
         )}
@@ -318,7 +330,7 @@ export default function OnboardingSlides({ onComplete }: OnboardingSlidesProps) 
 
       {/* Step dots */}
       <div className="ob-dots">
-        {[0, 1, 2, 3].map((i) => (
+        {(isLoggedIn ? [0, 3] : [0, 1, 2, 3]).map((i) => (
           <div key={i} className={`ob-dot ${i === slide ? "ob-dot-active" : i < slide ? "ob-dot-done" : ""}`} />
         ))}
       </div>
