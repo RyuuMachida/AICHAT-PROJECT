@@ -313,24 +313,30 @@ export default function ChatMessage({ role, content, timestamp, attachments, use
                 <span>Sumber dari web</span>
               </div>
               <div className="grounding-sources-list">
-                {groundingSources.map((src, i) => (
-                  <a
-                    key={i}
-                    href={src.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="grounding-source-chip"
-                    title={src.url}
-                  >
-                    <img
-                      src={`https://www.google.com/s2/favicons?domain=${new URL(src.url).hostname}&sz=16`}
-                      alt=""
-                      className="grounding-favicon"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                    />
-                    <span>{src.title}</span>
-                  </a>
-                ))}
+                {groundingSources.map((src, i) => {
+                  let hostname = "";
+                  try { hostname = new URL(src.url).hostname; } catch { /* skip */ }
+                  return (
+                    <a
+                      key={i}
+                      href={src.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="grounding-source-chip"
+                      title={src.url}
+                    >
+                      {hostname && (
+                        <img
+                          src={`https://www.google.com/s2/favicons?domain=${hostname}&sz=16`}
+                          alt=""
+                          className="grounding-favicon"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                        />
+                      )}
+                      <span>{src.title || hostname || "Sumber"}</span>
+                    </a>
+                  );
+                })}
               </div>
             </div>
           )}

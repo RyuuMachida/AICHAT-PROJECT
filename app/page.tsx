@@ -48,18 +48,22 @@ function getTimeString() {
   return new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
 }
 
-// Sanitize data for Firestore: remove undefined and truncate ultra-large base64 image strings to stay under Firestore 1MB limit
+// Sanitize data for Firestore: remove undefined and strip base64 image data to stay under Firestore 1MB limit
 function prepareForFirestore(obj: any): any {
   if (obj === null || obj === undefined) return null;
   if (typeof obj === "string") {
-    if (obj.length > 300000 && obj.startsWith("data:image/")) {
-      // Keep lightweight metadata representation for Firestore storage
-      return obj.slice(0, 100) + "...[truncated]";
+    // Strip any base64 image data > 50KB to keep Firestore doc under 1MB
+    if (obj.length > 50000 && obj.startsWith("data:image/")) {
+      return "[gambar disimpan lokal]";
     }
     return obj;
   }
   if (Array.isArray(obj)) return obj.map(prepareForFirestore);
   if (typeof obj === "object") {
+    // Strip base64 from image_url objects in message content arrays
+    if (obj.type === "image_url" && obj.image_url?.url?.startsWith("data:image/")) {
+      return { type: "image_url", image_url: { url: "[gambar disimpan lokal]" } };
+    }
     const clean: Record<string, any> = {};
     for (const key of Object.keys(obj)) {
       if (obj[key] !== undefined) clean[key] = prepareForFirestore(obj[key]);
