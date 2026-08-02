@@ -44,46 +44,52 @@
 
 /* Light mode */
 [data-theme="light"] {
-  --bg: #F7F7F8;
-  --bg-sidebar: #ECECEC;
-  --bg-hover: rgba(0, 0, 0, 0.05);
-  --bg-active: rgba(0, 0, 0, 0.09);
+  --bg: #F8FAFC;
+  --bg-sidebar: #FFFFFF;
+  --bg-hover: rgba(0, 0, 0, 0.04);
+  --bg-active: rgba(217, 119, 6, 0.08);
   --bg-input: #FFFFFF;
   --bg-card: #FFFFFF;
-  --bg-chip: #E5E5E5;
-  --bg-chip-hover: #D8D8D8;
-  --text: #111827;
-  --text-dim: #374151;
-  --text-muted: #6B7280;
-  --text-accent: #B45309;
+  --bg-chip: #F1F5F9;
+  --bg-chip-hover: #E2E8F0;
+  --text: #0F172A;
+  --text-dim: #475569;
+  --text-muted: #94A3B8;
+  --text-accent: #D97706;
   --accent: #D97706;
   --accent-dark: #B45309;
-  --border: rgba(0, 0, 0, 0.09);
-  --border-input: rgba(0, 0, 0, 0.16);
+  --border: rgba(0, 0, 0, 0.07);
+  --border-input: rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="light"] .sidebar {
+  background: #FAFAFA;
+  border-right: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.02);
 }
 
 [data-theme="light"] .conversation-item {
-  color: #374151;
+  color: #475569;
 }
 
 [data-theme="light"] .conversation-item:hover {
-  background: #E2E8F0;
+  background: #F1F5F9;
   color: #0F172A;
 }
 
 [data-theme="light"] .conversation-item.active {
-  background: #CBD5E1;
-  color: #0F172A;
+  background: #FEF3C7;
+  color: #92400E;
   font-weight: 600;
 }
 
 [data-theme="light"] .conversation-item-more {
-  color: #4B5563;
+  color: #64748B;
 }
 
 [data-theme="light"] .conversation-item:hover .conversation-item-more,
 [data-theme="light"] .conversation-item.active .conversation-item-more {
-  color: #1E293B;
+  color: #0F172A;
   opacity: 1;
 }
 
@@ -1287,7 +1293,6 @@ body {
 /* ── Bottom input area (in chat mode) ── */
 .input-area {
   padding: 10px 20px 18px;
-  background: transparent;
   flex-shrink: 0;
 }
 
