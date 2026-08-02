@@ -202,8 +202,8 @@ export default function Sidebar({
             <IconMenu size={18} />
           </button>
           <div className="sidebar-brand-container">
-            <img src="/logo&brand.jpeg" alt="logo&brand" className="sidebar-brand-img" />
-            <span className="sidebar-brand font-serif">logo&brand</span>
+            <img src="/logo&brand.jpeg" alt="Ryuu AI" className="sidebar-brand-img" />
+            <span className="sidebar-brand font-serif">Ryuu AI</span>
           </div>
         </div>
 

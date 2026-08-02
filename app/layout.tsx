@@ -2,10 +2,10 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "logo&brand — Asisten Cerdas",
-  description: "logo&brand dengan antarmuka modern dan respons cerdas. Ditenagai oleh AI canggih.",
-  keywords: ["chatbot", "AI", "assistant", "Groq", "Gemini", "Indonesia"],
-  authors: [{ name: "logo&brand" }],
+  title: "Ryuu AI — Asisten Cerdas",
+  description: "Ryuu AI dengan antarmuka modern dan respons cerdas. Ditenagai oleh AI canggih.",
+  keywords: ["chatbot", "Ryuu AI", "AI", "assistant", "Groq", "Gemini", "Indonesia"],
+  authors: [{ name: "Ryuu AI" }],
 };
 
 export const viewport: Viewport = {
