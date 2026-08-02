@@ -206,11 +206,17 @@ export default function Home() {
         // Load custom settings from firestore if exists
         const userDocRef = doc(db, "users", user.uid);
         const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
+        const isExistingUser = userDoc.exists();
+
+        if (isExistingUser) {
           const data = userDoc.data();
           if (data.username) setUsername(data.username);
           if (data.lastRenameTimestamp) setLastRenameTimestamp(data.lastRenameTimestamp);
           if (data.userCharacteristics) setUserCharacteristics(data.userCharacteristics);
+          setShowOnboarding(false);
+        } else {
+          // User baru & belum terdaftar di database: tampilkan startup slides (slide 3 & 4)
+          setShowOnboarding(true);
         }
 
         // Sync conversations list from Cloud Firestore
@@ -226,8 +232,6 @@ export default function Home() {
         } catch (err) {
           console.error("Error loading conversations from Firestore:", err);
         }
-        
-        setShowOnboarding(false);
       } else {
         setCurrentUser(null);
         setConversations([]);

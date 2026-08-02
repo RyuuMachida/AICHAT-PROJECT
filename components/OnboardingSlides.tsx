@@ -34,8 +34,11 @@ export default function OnboardingSlides({
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       
-      // Complete onboarding immediately with Google user info
-      onComplete(user.displayName || "User", user.email || "tamu@gmail.com");
+      // Update local state with Google info and proceed to slide 3 (feature guide & settings)
+      // so new users MUST see feature guide slides 3 & 4 without being skipped!
+      setName(user.displayName || "User");
+      setEmail(user.email || "tamu@gmail.com");
+      setSlide(3);
     } catch (error: any) {
       console.error("Google sign in error:", error);
       const code = error?.code || "";
@@ -116,7 +119,7 @@ export default function OnboardingSlides({
               <img src="/thumbnail&startupPage.jpeg" alt="Startup Banner" className="ob-startup-img" />
             </div>
             <h1 className="ob-title font-serif" style={{ fontSize: "32px", marginBottom: "6px" }}>
-              Selamat Datang di Ryuu AI
+              Selamat Datang
             </h1>
             <p className="ob-desc" style={{ marginBottom: "18px" }}>
               Partner berpikir cerdas untuk segala kebutuhan koding, kepenulisan, dan kreasi Anda.
@@ -229,7 +232,7 @@ export default function OnboardingSlides({
                 </form>
 
                 <p className="ob-policy-text">
-                  By continuing, you acknowledge Chatbot <span className="underline cursor-pointer">Privacy Policy</span>.
+                  By continuing, you acknowledge Ryuu AI <span className="underline cursor-pointer">Privacy Policy</span>.
                 </p>
               </div>
             )}
