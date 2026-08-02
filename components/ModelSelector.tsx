@@ -80,43 +80,46 @@ export default function ModelSelector({
       </button>
 
       {open && (
-        <div className="model-selector-dropdown">
-          <div className="model-dropdown-header">
-            <span>PILIH PROVIDER AI</span>
-            <span className="model-dropdown-subtitle">Limit diperbarui realtime</span>
-          </div>
+        <>
+          <div className="model-selector-backdrop" onClick={() => setOpen(false)} />
+          <div className="model-selector-dropdown">
+            <div className="model-dropdown-header">
+              <span>PILIH PROVIDER AI</span>
+              <span className="model-dropdown-subtitle">Limit diperbarui realtime</span>
+            </div>
 
-          {(Object.keys(PROVIDER_CONFIGS) as AIProvider[]).map((key) => {
-            const cfg = PROVIDER_CONFIGS[key];
-            const isSelected = key === provider;
-            const provReqs = requestHistory.filter((ts) => ts > windowStart).length;
-            const provRemaining = Math.max(0, cfg.rpmLimit - provReqs);
+            {(Object.keys(PROVIDER_CONFIGS) as AIProvider[]).map((key) => {
+              const cfg = PROVIDER_CONFIGS[key];
+              const isSelected = key === provider;
+              const provReqs = requestHistory.filter((ts) => ts > windowStart).length;
+              const provRemaining = Math.max(0, cfg.rpmLimit - provReqs);
 
-            return (
-              <button
-                key={key}
-                className={`model-dropdown-item ${isSelected ? "selected" : ""}`}
-                onClick={() => {
-                  onSelectProvider(key);
-                  setOpen(false);
-                }}
-              >
-                <div className="model-item-left">
-                  <div className="model-item-title-row">
-                    <span className="model-item-title">{cfg.name}</span>
-                    {isSelected}
+              return (
+                <button
+                  key={key}
+                  className={`model-dropdown-item ${isSelected ? "selected" : ""}`}
+                  onClick={() => {
+                    onSelectProvider(key);
+                    setOpen(false);
+                  }}
+                >
+                  <div className="model-item-left">
+                    <div className="model-item-title-row">
+                      <span className="model-item-title">{cfg.name}</span>
+                      {isSelected}
+                    </div>
+                    <span className="model-item-tag">{cfg.tag}</span>
                   </div>
-                  <span className="model-item-tag">{cfg.tag}</span>
-                </div>
-                <div className="model-item-right">
-                  <span className="model-item-rpm-badge">
-                    {provRemaining}/{cfg.rpmLimit} RPM
-                  </span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
+                  <div className="model-item-right">
+                    <span className="model-item-rpm-badge">
+                      {provRemaining}/{cfg.rpmLimit} RPM
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
   );

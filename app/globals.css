@@ -2067,30 +2067,49 @@ body {
   .input-footer { font-size: 10px; }
 
   .welcome-screen {
-    justify-content: space-between;
-    padding: 12px 16px 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Ketengahin secara vertikal */
+    align-items: center;
+    padding: 16px;
     height: 100%;
     overflow: hidden;
   }
 
-  /* Greeting shrinks saat keyboard muncul */
+  /* Greeting diletakkan di atas input dengan rapat */
   .welcome-top {
-    flex: 1;
-    min-height: 60px;
-    max-height: 180px;
+    flex: 0 0 auto;
+    width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
+    margin-bottom: 20px; /* Jarak rapat dari greeting ke input */
+    padding-top: 10px;
   }
 
-  /* Input + chips tetap di bawah */
+  /* Input + chips di tengah layar */
   .welcome-bottom {
-    flex-shrink: 0;
+    flex: 0 0 auto;
     width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
-  .welcome-title { font-size: 22px; }
+  .welcome-greeting {
+    margin-bottom: 0 !important;
+  }
+
+  .welcome-title { 
+    font-size: 22px; 
+    text-align: center;
+  }
   .welcome-subtitle { font-size: 13px; }
+  
+  .welcome-input-card {
+    margin-bottom: 12px !important;
+  }
+
   .welcome-input-wrapper { padding: 12px 12px 8px 16px; }
 
   /* Textarea jangan terlalu tinggi di mobile agar tidak keluar layar */
@@ -3378,22 +3397,35 @@ body {
   font-weight: 700;
 }
 
+/* Tampilan model selector dropdown diubah menjadi modal dialog di tengah layar agar seragam di semua device */
 .model-selector-dropdown {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  left: auto;
-  z-index: 999;
-  width: 280px;
+  position: fixed;
+  top: 50% !important;
+  left: 50% !important;
+  bottom: auto !important;
+  transform: translate(-50%, -50%);
+  z-index: 99999;
+  width: 90%;
+  max-width: 320px;
   background: #1C1C1C;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 14px;
-  padding: 8px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  animation: scaleUp 0.15s var(--ease-spring);
+  gap: 8px;
+  animation: modalSlideUp 0.2s ease;
+}
+
+/* Tambahkan overlay latar belakang gelap di belakang dropdown */
+.model-selector-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99998;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(3px);
+  animation: fadeIn 0.15s ease;
 }
 
 [data-theme="light"] .model-selector-dropdown {
