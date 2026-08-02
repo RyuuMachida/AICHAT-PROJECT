@@ -6,7 +6,6 @@ import { Attachment } from "./ChatInput";
 import { compressImage } from "@/lib/imageUtils";
 
 import ModelSelector, { AIProvider } from "./ModelSelector";
-import PixelBlast from "./PixelBlast";
 
 interface WelcomeScreenProps {
   username: string;
@@ -137,21 +136,7 @@ export default function WelcomeScreen({
   const hasContent = value.trim() || attachments.length > 0;
 
   return (
-    <div className="welcome-screen" style={{ position: "relative", overflow: "hidden" }}>
-      <PixelBlast
-        variant="square"
-        pixelSize={3}
-        color="#ffffff"
-        patternScale={2}
-        patternDensity={1}
-        enableRipples
-        rippleSpeed={0.3}
-        rippleThickness={0.1}
-        rippleIntensityScale={1}
-        speed={0.5}
-        transparent
-        edgeFade={0.5}
-      />
+    <div className="welcome-screen">
       {/* Greeting */}
       <div className="welcome-greeting">
         <h1 className="welcome-title">
