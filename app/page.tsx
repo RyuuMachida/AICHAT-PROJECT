@@ -906,8 +906,22 @@ export default function Home() {
           />
         ) : (
           /* Active chat */
-          <>
-            <div className="chat-top-bar">
+          <div className="active-chat-wrapper" style={{ position: "relative", display: "flex", flexDirection: "column", height: "100%", width: "100%", overflow: "hidden" }}>
+            <DotField
+              dotRadius={1.5}
+              dotSpacing={14}
+              cursorRadius={500}
+              cursorForce={0.1}
+              bulgeOnly
+              bulgeStrength={67}
+              glowRadius={160}
+              sparkle={false}
+              waveAmplitude={0}
+              gradientFrom="rgba(168, 85, 247, 0.35)"
+              gradientTo="rgba(180, 151, 207, 0.25)"
+              glowColor="#120F17"
+            />
+            <div className="chat-top-bar" style={{ position: "relative", zIndex: 2, background: "transparent" }}>
               <ModelSelector
                 provider={provider}
                 onSelectProvider={handleSelectProvider}
@@ -915,21 +929,7 @@ export default function Home() {
               />
             </div>
 
-            <div className="chat-container" style={{ position: "relative", overflow: "hidden" }}>
-              <DotField
-                dotRadius={1.5}
-                dotSpacing={14}
-                cursorRadius={500}
-                cursorForce={0.1}
-                bulgeOnly
-                bulgeStrength={67}
-                glowRadius={160}
-                sparkle={false}
-                waveAmplitude={0}
-                gradientFrom="rgba(168, 85, 247, 0.35)"
-                gradientTo="rgba(180, 151, 207, 0.25)"
-                glowColor="#120F17"
-              />
+            <div className="chat-container" style={{ position: "relative", zIndex: 2, background: "transparent" }}>
               <div className="chat-inner">
                 {messages.map((msg, i) => (
                   <ChatMessage
@@ -949,20 +949,22 @@ export default function Home() {
               </div>
             </div>
 
-            <ChatInput
-              value={input}
-              onChange={setInput}
-              onSend={handleSend}
-              isLoading={isLoading}
-              disabled={setupError}
-              attachments={attachments}
-              onAddAttachment={handleAddAttachment}
-              onRemoveAttachment={handleRemoveAttachment}
-              isRecording={isRecording}
-              onStartRecording={handleStartRecording}
-              onStopRecording={handleStopRecording}
-            />
-          </>
+            <div className="chat-input-outer" style={{ position: "relative", zIndex: 2, background: "transparent" }}>
+              <ChatInput
+                value={input}
+                onChange={setInput}
+                onSend={handleSend}
+                isLoading={isLoading}
+                disabled={setupError}
+                attachments={attachments}
+                onAddAttachment={handleAddAttachment}
+                onRemoveAttachment={handleRemoveAttachment}
+                isRecording={isRecording}
+                onStartRecording={handleStartRecording}
+                onStopRecording={handleStopRecording}
+              />
+            </div>
+          </div>
         )}
       </div>
 
