@@ -231,7 +231,7 @@ export default function ChatMessage({ role, content, timestamp, attachments, use
             <img src="/gemini.png" alt="Gemini" className="ai-model-avatar-img" />
           )
         ) : userPhoto ? (
-          <img src={userPhoto} alt={username || "User"} className="user-avatar-img" />
+          <img src={userPhoto} alt={username || "User"} className="user-avatar-img" referrerPolicy="no-referrer" />
         ) : (
           <span style={{ fontSize: 12, fontFamily: "'Outfit',sans-serif", fontWeight: 700, color: "#000" }}>
             {(username || "U").charAt(0).toUpperCase()}

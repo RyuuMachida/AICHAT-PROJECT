@@ -34,11 +34,11 @@ export default function OnboardingSlides({
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       
-      // Update local state with Google info and proceed to slide 3 (feature guide & settings)
-      // so new users MUST see feature guide slides 3 & 4 without being skipped!
+      // Update local state with Google info and proceed to slide 2 (What's your name)
+      // then slide 3 (Fitur & Keunggulan) so new users pass all required steps!
       setName(user.displayName || "User");
       setEmail(user.email || "tamu@gmail.com");
-      setSlide(3);
+      setSlide(2);
     } catch (error: any) {
       console.error("Google sign in error:", error);
       const code = error?.code || "";
@@ -239,8 +239,8 @@ export default function OnboardingSlides({
           </div>
         )}
 
-        {/* Slide 2: What's your name? (Only shown if NOT logged in) */}
-        {slide === 2 && !isLoggedIn && (
+        {/* Slide 2: What's your name? */}
+        {slide === 2 && (
           <div className="ob-slide" key="name">
             <h1 className="ob-title font-serif">What's your name?</h1>
             <p className="ob-desc">So Chatbot knows what to call you.</p>
@@ -336,7 +336,7 @@ export default function OnboardingSlides({
 
       {/* Step dots */}
       <div className="ob-dots">
-        {(isLoggedIn ? [0, 3] : [0, 1, 2, 3]).map((i) => (
+        {(isLoggedIn ? [3] : [0, 1, 2, 3]).map((i) => (
           <div key={i} className={`ob-dot ${i === slide ? "ob-dot-active" : i < slide ? "ob-dot-done" : ""}`} />
         ))}
       </div>

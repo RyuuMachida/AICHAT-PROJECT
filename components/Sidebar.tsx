@@ -289,7 +289,7 @@ export default function Sidebar({
               title="Buka Sidebar"
             >
               {userPhoto ? (
-                <img src={userPhoto} alt={username} className="profile-avatar-img" />
+                <img src={userPhoto} alt={username} className="profile-avatar-img" referrerPolicy="no-referrer" />
               ) : (
                 username.charAt(0).toUpperCase()
               )}
@@ -298,7 +298,7 @@ export default function Sidebar({
             <div className="profile-container">
               <div className="profile-avatar">
                 {userPhoto ? (
-                  <img src={userPhoto} alt={username} className="profile-avatar-img" />
+                  <img src={userPhoto} alt={username} className="profile-avatar-img" referrerPolicy="no-referrer" />
                 ) : (
                   username.charAt(0).toUpperCase()
                 )}
