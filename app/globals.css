@@ -1369,10 +1369,20 @@ body {
   flex: 1;
   overflow-y: auto;
   padding: 40px 32px;
-  background: var(--bg);
+  background-color: var(--bg);
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 28px 28px;
   animation: fadeIn var(--duration-normal) var(--ease-out);
   display: flex;
   justify-content: center;
+}
+
+[data-theme="light"] .settings-container {
+  background-image: 
+    linear-gradient(to right, rgba(0, 0, 0, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.06) 1px, transparent 1px);
 }
 
 .settings-wrapper {
