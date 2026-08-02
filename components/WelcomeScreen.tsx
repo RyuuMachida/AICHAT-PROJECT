@@ -139,10 +139,6 @@ export default function WelcomeScreen({
     <div className="welcome-screen">
       {/* Greeting */}
       <div className="welcome-greeting">
-        <div className="welcome-brand-badge">
-          <img src="/logo&brand.jpeg" alt="Ryuu AI" className="welcome-brand-img" />
-          <span className="welcome-brand-text">Ryuu AI</span>
-        </div>
         <h1 className="welcome-title">
           {getGreeting()}, {username}
         </h1>
