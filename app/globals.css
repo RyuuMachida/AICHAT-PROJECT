@@ -1049,7 +1049,7 @@ body {
   overflow-y: auto;
   scroll-behavior: smooth;
   position: relative;
-  z-index: 2;
+  z-index: 1;
 }
 
 .chat-inner {
@@ -1060,7 +1060,7 @@ body {
   flex-direction: column;
   gap: 38px;
   position: relative;
-  z-index: 2;
+  z-index: 1;
 }
 
 /* Mini header shown only when chatting */
@@ -1071,7 +1071,7 @@ body {
   padding: 14px 20px;
   flex-shrink: 0;
   position: relative;
-  z-index: 3;
+  z-index: 2;
 }
 
 .chat-top-bar-model {
