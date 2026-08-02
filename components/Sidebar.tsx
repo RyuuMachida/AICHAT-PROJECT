@@ -201,7 +201,10 @@ export default function Sidebar({
           <button className="sidebar-toggle-btn" onClick={onToggleCollapse} title={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
             <IconMenu size={18} />
           </button>
-          <span className="sidebar-brand font-serif">ChatBot AI</span>
+          <div className="sidebar-brand-container">
+            <img src="/logo&brand.jpeg" alt="logo&brand" className="sidebar-brand-img" />
+            <span className="sidebar-brand font-serif">logo&brand</span>
+          </div>
         </div>
 
         {/* Primary nav: New chat button */}

@@ -109,11 +109,14 @@ export default function OnboardingSlides({
   return (
     <div className="ob-page">
       <div className="ob-body">
-        {/* Slide 0: Selamat Datang di ChatBot AI */}
+        {/* Slide 0: Selamat Datang di logo&brand */}
         {slide === 0 && (
           <div className="ob-slide" key="welcome" style={{ maxWidth: "520px" }}>
+            <div className="ob-startup-banner">
+              <img src="/thumbnail&startupPage.jpeg" alt="Startup Banner" className="ob-startup-img" />
+            </div>
             <h1 className="ob-title font-serif" style={{ fontSize: "32px", marginBottom: "6px" }}>
-              Selamat Datang di ChatBot AI
+              Selamat Datang di logo&brand
             </h1>
             <p className="ob-desc" style={{ marginBottom: "18px" }}>
               Partner berpikir cerdas untuk segala kebutuhan koding, kepenulisan, dan kreasi Anda.
@@ -126,7 +129,7 @@ export default function OnboardingSlides({
                   <IconBot size={18} />
                 </div>
                 <div className="ob-info-content">
-                  <strong>Pengertian ChatBot AI</strong>
+                  <strong>Pengertian logo&brand</strong>
                   Asisten cerdas berbasis teknologi AI canggih untuk menyederhanakan tugas-tugas harian Anda melalui percakapan alami.
                 </div>
               </div>
@@ -264,7 +267,7 @@ export default function OnboardingSlides({
         {/* Slide 3: Before your first chat / Fitur Utama */}
         {slide === 3 && (
           <div className="ob-slide" key="before-chat" style={{ maxWidth: "480px" }}>
-            <h1 className="ob-title font-serif">Fitur & Keunggulan ChatBot AI</h1>
+            <h1 className="ob-title font-serif">Fitur & Keunggulan logo&brand</h1>
             <p className="ob-desc">Informasi dan pengaturan sebelum memulai percakapan Anda</p>
 
             <div className="ob-info-box" style={{ marginTop: 16 }}>

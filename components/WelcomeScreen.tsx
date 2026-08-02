@@ -139,6 +139,10 @@ export default function WelcomeScreen({
     <div className="welcome-screen">
       {/* Greeting */}
       <div className="welcome-greeting">
+        <div className="welcome-brand-badge">
+          <img src="/logo&brand.jpeg" alt="logo&brand" className="welcome-brand-img" />
+          <span className="welcome-brand-text">logo&brand</span>
+        </div>
         <h1 className="welcome-title">
           {getGreeting()}, {username}
         </h1>
