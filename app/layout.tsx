@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: "Ryuu AI dengan antarmuka modern dan respons cerdas. Ditenagai oleh AI canggih.",
   keywords: ["chatbot", "Ryuu AI", "AI", "assistant", "Groq", "Gemini", "Indonesia"],
   authors: [{ name: "Ryuu AI" }],
+  icons: {
+    icon: "/logo&brand.jpeg",
+    shortcut: "/logo&brand.jpeg",
+    apple: "/logo&brand.jpeg",
+  },
 };
 
 export const viewport: Viewport = {
