@@ -1522,6 +1522,20 @@ body {
   width: 100%;
 }
 
+@media (max-width: 600px) {
+  .settings-input-group {
+    flex-wrap: wrap;
+  }
+  .settings-input {
+    min-width: 0;
+    flex: 1 1 160px;
+  }
+  .settings-action-btn {
+    flex-shrink: 0;
+    padding: 10px 14px;
+  }
+}
+
 .settings-profile-avatar {
   width: 32px;
   height: 32px;
@@ -2029,8 +2043,9 @@ body {
   .input-footer { font-size: 10px; }
 
   .welcome-screen {
-    justify-content: flex-start;
-    padding: 32px 16px 40px;
+    justify-content: center;
+    padding: 24px 16px;
+    margin: auto 0;
   }
 
   .welcome-title { font-size: 22px; }
