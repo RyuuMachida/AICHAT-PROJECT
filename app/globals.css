@@ -3342,9 +3342,9 @@ body {
 
 .model-selector-dropdown {
   position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  z-index: 300;
+  bottom: calc(100% + 6px);
+  left: 0;
+  z-index: 999;
   width: 280px;
   background: #1C1C1C;
   border: 1px solid rgba(255, 255, 255, 0.12);
