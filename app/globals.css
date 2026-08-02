@@ -3711,7 +3711,11 @@ body {
   }
 
   .chat-container {
-    padding: 12px 8px !important;
+    padding: 4px 8px !important;
+    margin-top: 0px !important; /* Di bawah padding-top 52px main-content */
+    flex: 1;
+    overflow-y: auto;
+    width: 100%;
   }
 
   .recording-wave-container {
