@@ -25,7 +25,7 @@ Dengan filosofi **"AI Chat for Everyone"**, Ryuu AI hadir dengan antarmuka yang 
 - **Vanilla CSS3**: Styling kustom tanpa dependensi CSS eksternal
 
 ### Backend dan SDK AI
-- **Google GenAI SDK (`@google/genai`)**: v2.13.0
+- **Gemini SDK (`@google/genai`)**: v2.13.0
 - **Groq SDK (`groq-sdk`)**: v0.12.0
 - **Firebase Web SDK (`firebase`)**: v12.16.0
 - **Node.js Environment**: v22.x
@@ -34,7 +34,7 @@ Dengan filosofi **"AI Chat for Everyone"**, Ryuu AI hadir dengan antarmuka yang 
 
 ## 3. Layanan API dan Spesifikasi Model
 
-1. **Google GenAI API (`@google/genai` v2.13.0)**:
+1. **Gemini API by Google (`@google/genai` v2.13.0)**:
    - **Model**: `gemini-2.5-flash`
    - **Fungsi**: Pemrosesan multimodal utama (analisis gambar/vision, dokumen), serta Google Search Grounding.
 2. **Groq LPU Engine (`groq-sdk` v0.12.0)**:
