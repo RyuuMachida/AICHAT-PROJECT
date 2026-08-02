@@ -45,9 +45,9 @@ export default function PixelBlast({
     const scene = new THREE.Scene();
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-    const renderer = new THREE.WebGLRenderer({ alpha: transparent, antialias: true });
+    const renderer = new THREE.WebGLRenderer({ alpha: transparent, antialias: false });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(1);
     container.appendChild(renderer.domElement);
 
     const parseColor = (hex: string) => {
@@ -98,7 +98,9 @@ export default function PixelBlast({
       varying vec2 vUv;
 
       float hash(vec2 p) {
-        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+        p = fract(p * vec2(123.34, 456.21));
+        p += dot(p, p + 45.32);
+        return fract(p.x * p.y);
       }
 
       float noise(vec2 p) {
@@ -109,22 +111,40 @@ export default function PixelBlast({
                    mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
       }
 
-      void main() {
-        vec2 st = gl_FragCoord.xy / uResolution.xy;
-        vec2 gridSt = floor(gl_FragCoord.xy / uPixelSize) * uPixelSize / uResolution.xy;
-        
-        float t = uTime * uSpeed;
-        
-        // Base pixel grid noise pattern
-        vec2 nPos = gridSt * uPatternScale * 10.0 + vec2(t * 0.2, t * 0.3);
-        float n = noise(nPos);
-        float n2 = noise(nPos * 2.0 - t * 0.1);
-        float particle = smoothstep(1.0 - uPatternDensity * 0.4, 1.0, n * n2);
+      float fbm(vec2 p) {
+        float val = 0.0;
+        float amp = 0.5;
+        for (int i = 0; i < 4; i++) {
+          val += amp * noise(p);
+          p *= 2.0;
+          amp *= 0.5;
+        }
+        return val;
+      }
 
-        // Ripple from click / mouse
+      void main() {
+        // Crisp pixel grid alignment matching React-Bits PixelBlast halftone style
+        float size = max(4.0, uPixelSize * 2.0);
+        vec2 pixelCoord = floor(gl_FragCoord.xy / size);
+        vec2 cellUv = fract(gl_FragCoord.xy / size) - 0.5;
+        
+        vec2 gridPos = pixelCoord * size / uResolution.xy;
+        
+        float t = uTime * uSpeed * 0.4;
+        
+        // Fluid organic shape noise
+        vec2 nPos = gridPos * uPatternScale * 4.0 + vec2(t * 0.15, t * 0.1);
+        float n = fbm(nPos);
+        
+        // Crisp square pixel dots
+        float dotSize = smoothstep(0.2, 0.75, n * uPatternDensity);
+        
+        float isPixel = step(abs(cellUv.x), dotSize * 0.42) * step(abs(cellUv.y), dotSize * 0.42);
+
+        // Interactive ripple effect from pointer
         float ripple = 0.0;
         if (uEnableRipples > 0.5) {
-          float dist = distance(gridSt, uMouse);
+          float dist = distance(gridPos, uMouse);
           float rAge = (uTime - uRippleTime) * uRippleSpeed;
           if (rAge > 0.0 && rAge < 2.5) {
             float ring = abs(dist - rAge);
@@ -132,17 +152,17 @@ export default function PixelBlast({
           }
         }
 
-        float alpha = clamp(particle + ripple, 0.0, 1.0);
+        float alpha = isPixel * clamp(n * 1.5 + ripple, 0.0, 1.0);
 
-        // Edge fade out
+        // Edge fade out towards screen margins
         if (uEdgeFade > 0.0) {
-          float dEdge = min(min(st.x, 1.0 - st.x), min(st.y, 1.0 - st.y));
-          float fade = smoothstep(0.0, uEdgeFade * 0.5, dEdge);
+          float dEdge = min(min(gridPos.x, 1.0 - gridPos.x), min(gridPos.y, 1.0 - gridPos.y));
+          float fade = smoothstep(0.0, uEdgeFade * 0.4, dEdge);
           alpha *= fade;
         }
 
-        // Slight opacity scaling for clean subtle visual background
-        alpha *= 0.18;
+        // Crisp white dots with elegant contrast against dark background
+        alpha *= 0.85;
 
         gl_FragColor = vec4(uColor, alpha);
       }
@@ -223,5 +243,18 @@ export default function PixelBlast({
     edgeFade,
   ]);
 
-  return <div ref={mountRef} style={{ width: "100%", height: "100%", position: "absolute", top: 0, left: 0, pointerEvents: "none" }} />;
+  return (
+    <div
+      ref={mountRef}
+      style={{
+        width: "100%",
+        height: "100%",
+        position: "absolute",
+        top: 0,
+        left: 0,
+        pointerEvents: "none",
+        zIndex: 0,
+      }}
+    />
+  );
 }
