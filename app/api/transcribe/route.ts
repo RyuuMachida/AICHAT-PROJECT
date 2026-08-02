@@ -71,9 +71,8 @@ export async function POST(req: NextRequest) {
 
     const transcription = await groq.audio.transcriptions.create({
       file: await Groq.toFile(buffer, fileName, { type: mimeType }),
-      model: "whisper-large-v3-turbo",
-      prompt: "Percakapan sehari-hari bahasa Indonesia.",
-      response_format: "json",
+      model: "whisper-large-v3",
+      language: "id",
       temperature: 0.0,
     });
 
