@@ -103,6 +103,7 @@ html {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -775,6 +776,13 @@ body {
   height: 100%;
   padding: 40px 24px;
   animation: fadeIn 0.4s var(--ease-out);
+  overflow-y: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE & Edge */
+}
+
+.welcome-screen::-webkit-scrollbar {
+  display: none; /* Chrome, Safari & Opera */
 }
 
 .welcome-greeting {
@@ -2019,6 +2027,11 @@ body {
   .input-area { padding: 8px 10px 14px; }
   .input-wrapper-chat { padding: 12px 12px 8px 16px; }
   .input-footer { font-size: 10px; }
+
+  .welcome-screen {
+    justify-content: flex-start;
+    padding: 32px 16px 40px;
+  }
 
   .welcome-title { font-size: 22px; }
   .welcome-subtitle { font-size: 13px; }
