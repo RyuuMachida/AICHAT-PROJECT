@@ -6,6 +6,7 @@ import { Attachment } from "./ChatInput";
 import { compressImage } from "@/lib/imageUtils";
 
 import ModelSelector, { AIProvider } from "./ModelSelector";
+import Noise from "./Noise";
 
 interface WelcomeScreenProps {
   username: string;
@@ -136,7 +137,14 @@ export default function WelcomeScreen({
   const hasContent = value.trim() || attachments.length > 0;
 
   return (
-    <div className="welcome-screen">
+    <div className="welcome-screen" style={{ position: "relative", overflow: "hidden" }}>
+      <Noise
+        patternSize={250}
+        patternScaleX={1}
+        patternScaleY={1}
+        patternRefreshInterval={2}
+        patternAlpha={15}
+      />
       {/* Greeting */}
       <div className="welcome-greeting">
         <h1 className="welcome-title">
