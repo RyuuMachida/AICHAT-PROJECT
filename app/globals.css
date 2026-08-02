@@ -2002,8 +2002,9 @@ body {
   border-bottom: 1px solid var(--border);
   background: var(--bg);
   flex-shrink: 0;
-  position: relative;
-  z-index: 10;
+  position: sticky;
+  top: 0;
+  z-index: 50;
 }
 
 .mobile-topbar-title {
@@ -2034,10 +2035,16 @@ body {
 
   .main-content {
     position: relative;
-    overflow: hidden;
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
   }
 
-  .chat-inner { padding: 16px 12px; gap: 28px; }
+  /* Sembunyikan chat-top-bar di mobile — sudah digantikan oleh mobile-topbar */
+  .chat-top-bar { display: none !important; }
+
+  .chat-inner { padding: 16px 12px; gap: 28px; max-width: 100%; }
   .input-area { padding: 8px 10px 14px; }
   .input-wrapper-chat { padding: 12px 12px 8px 16px; }
   .input-footer { font-size: 10px; }
@@ -2045,7 +2052,7 @@ body {
   .welcome-screen {
     justify-content: center;
     padding: 24px 16px;
-    margin: auto 0;
+    flex: 1;
   }
 
   .welcome-title { font-size: 22px; }
@@ -2056,9 +2063,6 @@ body {
   .settings-container { padding: 20px 14px; }
   .settings-wrapper { gap: 20px; }
   .settings-options-grid { grid-template-columns: 1fr; }
-
-  .chat-top-bar { padding: 10px 14px; }
-  .chat-inner { max-width: 100%; }
 
   .active-chat-wrapper { height: 100%; }
 }
