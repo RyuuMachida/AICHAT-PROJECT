@@ -1057,6 +1057,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 38px;
+  position: relative;
+  z-index: 1;
 }
 
 /* Mini header shown only when chatting */
