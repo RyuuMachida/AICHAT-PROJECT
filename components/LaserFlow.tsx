@@ -126,14 +126,14 @@ export default function LaserFlow({
       }
 
       void main() {
-        vec2 st = vUv * 2.0 - 1.0;
+        vec2 st = (gl_FragCoord.xy / uResolution.xy) * 2.0 - 1.0;
         st.x -= uHorizontalBeamOffset;
         st.y -= uVerticalBeamOffset;
 
         // Laser central beam vertical line
-        float distCenter = abs(st.x) / (uHorizontalSizing * 0.8);
-        float beamCore = exp(-distCenter * 25.0 * uDecay);
-        float beamGlow = exp(-distCenter * 4.0 * uDecay);
+        float distCenter = abs(st.x) / uHorizontalSizing;
+        float beamCore = exp(-distCenter * 35.0 * uDecay);
+        float beamGlow = exp(-distCenter * 6.0 * uDecay);
 
         // Vertical fog/wisp flow dynamics
         float t = uTime * uFlowSpeed;
@@ -143,19 +143,21 @@ export default function LaserFlow({
         // Energetic wisps flowing upwards
         float wispT = uTime * (uWispSpeed * 0.1);
         vec2 wispUv = vec2(st.x * 12.0 * uWispDensity, st.y * 3.0 - wispT);
-        float wisps = pow(noise(wispUv), 2.5) * uWispIntensity * 0.2;
+        float wisps = pow(noise(wispUv), 3.0) * uWispIntensity * 0.1;
 
-        float totalIntensity = (beamCore * 3.0 + beamGlow * 1.5 + fog + wisps);
+        // Base glow intensity fading towards top
+        float heightFade = smoothstep(1.0, -1.0, st.y);
+        float totalIntensity = (beamCore * 2.0 + beamGlow * 0.8 + fog + wisps) * heightFade;
 
         // Bottom flare glow
-        float bottomFlare = exp(-length(vec2(st.x * 1.5, (st.y + 0.8) * 3.0)) * 1.5) * 2.5;
+        float bottomFlare = exp(-length(vec2(st.x * 2.0, (st.y + 0.9) * 4.0)) * 2.0) * 1.5;
         totalIntensity += bottomFlare;
 
-        // Vivid neon glow color
-        float alpha = clamp(totalIntensity * 0.65, 0.0, 1.0);
-        vec3 finalColor = mix(uColor, vec3(1.0, 0.9, 1.0), beamCore * 0.8);
+        // Alpha calculation for smooth transparency overlay
+        float alpha = clamp(totalIntensity * 0.45, 0.0, 1.0);
+        vec3 finalColor = mix(uColor, vec3(1.0), beamCore * 0.7);
 
-        gl_FragColor = vec4(finalColor, alpha);
+        gl_FragColor = vec4(finalColor * (totalIntensity * 0.5 + 0.5), alpha);
       }
     `;
 
@@ -223,13 +225,10 @@ export default function LaserFlow({
         position: "absolute",
         top: 0,
         left: 0,
-        right: 0,
-        bottom: 0,
         width: "100%",
         height: "100%",
         pointerEvents: "none",
         zIndex: 0,
-        overflow: "hidden",
       }}
     />
   );
