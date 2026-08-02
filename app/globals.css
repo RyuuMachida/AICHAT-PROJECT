@@ -2055,7 +2055,7 @@ body {
     display: flex;
     flex-direction: column;
     flex: 1;
-    padding-top: 52px; /* offset untuk fixed mobile-topbar */
+    padding-top: 52px;
   }
 
   .chat-top-bar { display: none !important; }
