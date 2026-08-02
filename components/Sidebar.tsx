@@ -198,7 +198,17 @@ export default function Sidebar({
       <aside className={`sidebar ${isOpen ? "open" : ""} ${collapsed ? "collapsed" : ""}`}>
         {/* Top toolbar: toggle button + brand */}
         <div className="sidebar-toolbar">
-          <button className="sidebar-toggle-btn" onClick={onToggleCollapse} title={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
+          <button
+            className="sidebar-toggle-btn"
+            onClick={() => {
+              if (window.innerWidth <= 768) {
+                onClose();
+              } else {
+                onToggleCollapse();
+              }
+            }}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
             <IconMenu size={18} />
           </button>
           <div className="sidebar-brand-container">
