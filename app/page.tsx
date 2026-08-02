@@ -879,9 +879,19 @@ export default function Home() {
               <line x1="3" y1="18" x2="21" y2="18" />
             </svg>
           </button>
-          <span className="mobile-topbar-title">
-            {view === "settings" ? "Pengaturan" : inConversation ? "Ryuu AI" : "Ryuu AI"}
-          </span>
+          {view === "settings" ? (
+            <span className="mobile-topbar-title">Pengaturan</span>
+          ) : inConversation ? (
+            <span className="mobile-topbar-title" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "calc(100% - 50px)" }}>
+              {conversations.find(c => c.id === activeConvoId)?.title || "Ryuu AI"}
+            </span>
+          ) : (
+            <span className="mobile-topbar-title" style={{ display: "flex", alignItems: "center", gap: 7 }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/icon.svg" alt="Ryuu AI logo" width={20} height={20} style={{ borderRadius: 5 }} />
+              Ryuu AI
+            </span>
+          )}
         </div>
 
         {view === "settings" ? (
