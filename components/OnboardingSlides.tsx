@@ -18,7 +18,7 @@ export default function OnboardingSlides({
   currentUsername = "User",
   currentEmail = "",
 }: OnboardingSlidesProps) {
-  const [slide, setSlide] = useState(0);
+  const [slide, setSlide] = useState(isLoggedIn ? 3 : 0);
   const [email, setEmail] = useState(currentEmail);
   const [name, setName] = useState(currentUsername);
   const [improveModels, setImproveModels] = useState(true);

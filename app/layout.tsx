@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Ryuu AI — Asisten Cerdas",
+  title: "Ryuu AI — AI Chat for Everyone",
   description: "Ryuu AI dengan antarmuka modern dan respons cerdas. Ditenagai oleh AI canggih.",
   keywords: ["chatbot", "Ryuu AI", "AI", "assistant", "Groq", "Gemini", "Indonesia"],
   authors: [{ name: "Ryuu AI" }],
