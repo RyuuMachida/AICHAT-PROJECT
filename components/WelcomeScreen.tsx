@@ -145,14 +145,18 @@ export default function WelcomeScreen({
         patternRefreshInterval={2}
         patternAlpha={15}
       />
-      {/* Greeting */}
-      <div className="welcome-greeting">
-        <h1 className="welcome-title">
-          {getGreeting()}, {username}
-        </h1>
+
+      {/* TOP: Greeting — shrinks when keyboard appears */}
+      <div className="welcome-top">
+        <div className="welcome-greeting">
+          <h1 className="welcome-title">
+            {getGreeting()}, {username}
+          </h1>
+        </div>
       </div>
 
-      {/* Floating input card */}
+      {/* BOTTOM: Input card + chips — pinned to bottom */}
+      <div className="welcome-bottom">
       <div className="welcome-input-card">
         {/* Previews inside the input card wrapper */}
         {attachments.length > 0 && (
@@ -180,10 +184,6 @@ export default function WelcomeScreen({
 
         {isRecording ? (
           <div className="recording-wave-container" style={{ margin: "16px 0" }}>
-            <div className="recording-badge">
-              <span className="recording-indicator-dot" />
-              <span className="recording-status-text">Merekam Suara...</span>
-            </div>
             <div className="recording-soundwave-bars">
               <span className="soundwave-bar bar-1" />
               <span className="soundwave-bar bar-2" />
@@ -275,7 +275,8 @@ export default function WelcomeScreen({
             {chip.label}
           </button>
         ))}
-      </div>
+      </div>{/* end welcome-chips */}
+      </div>{/* end welcome-bottom */}
     </div>
   );
 }
