@@ -177,6 +177,9 @@ const ALLOWED_AUDIO_TYPES = [
   "audio/ogg",
   "audio/mp4",
   "audio/mpeg",
+  "audio/aac",
+  "audio/m4a",
+  "audio/x-m4a",
 ];
 const MAX_AUDIO_SIZE = 25 * 1024 * 1024; // 25 MB (batas Whisper)
 
@@ -188,9 +191,12 @@ export function validateAudioFile(file: Blob): {
     return { valid: false, reason: "File audio terlalu besar (maks 25 MB)" };
   }
 
-  // Izinkan jika tipe kosong (browser kadang tidak set type)
-  if (file.type && file.type !== "" && !ALLOWED_AUDIO_TYPES.includes(file.type)) {
-    return { valid: false, reason: `Tipe file tidak diizinkan: ${file.type}` };
+  // Izinkan jika tipe kosong atau merupakan variasi dari audio/
+  if (file.type && file.type !== "") {
+    const baseType = file.type.split(";")[0].toLowerCase().trim();
+    if (!baseType.startsWith("audio/") && !ALLOWED_AUDIO_TYPES.includes(baseType)) {
+      return { valid: false, reason: `Tipe file tidak diizinkan: ${file.type}` };
+    }
   }
 
   return { valid: true };
