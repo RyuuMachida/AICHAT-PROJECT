@@ -865,7 +865,24 @@ export default function Home() {
         onToggleCollapse={handleToggleCollapse}
       />
 
-      <div className="main-content">
+      <div className="main-content" style={{ position: "relative", overflow: "hidden" }}>
+        {inConversation && view === "chat" && (
+          <LaserFlow
+            color="#FF79C6"
+            wispDensity={1}
+            flowSpeed={0.35}
+            verticalSizing={2}
+            horizontalSizing={0.5}
+            fogIntensity={0.45}
+            fogScale={0.3}
+            wispSpeed={15}
+            wispIntensity={5}
+            flowStrength={0.25}
+            decay={1.1}
+            horizontalBeamOffset={0}
+            verticalBeamOffset={-0.5}
+          />
+        )}
         {view === "settings" ? (
           <SettingsView
             username={username}
@@ -915,22 +932,7 @@ export default function Home() {
               />
             </div>
 
-            <div className="chat-container" style={{ position: "relative", overflow: "hidden" }}>
-              <LaserFlow
-                color="#FF79C6"
-                wispDensity={1}
-                flowSpeed={0.35}
-                verticalSizing={2}
-                horizontalSizing={0.5}
-                fogIntensity={0.45}
-                fogScale={0.3}
-                wispSpeed={15}
-                wispIntensity={5}
-                flowStrength={0.25}
-                decay={1.1}
-                horizontalBeamOffset={0}
-                verticalBeamOffset={-0.5}
-              />
+            <div className="chat-container">
               <div className="chat-inner">
                 {messages.map((msg, i) => (
                   <ChatMessage

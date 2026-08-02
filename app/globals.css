@@ -1048,6 +1048,8 @@ body {
   flex: 1;
   overflow-y: auto;
   scroll-behavior: smooth;
+  position: relative;
+  z-index: 1;
 }
 
 .chat-inner {
@@ -1068,6 +1070,8 @@ body {
   justify-content: flex-end;
   padding: 14px 20px;
   flex-shrink: 0;
+  position: relative;
+  z-index: 2;
 }
 
 .chat-top-bar-model {
