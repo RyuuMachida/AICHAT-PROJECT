@@ -2061,8 +2061,14 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  overflow: hidden;
+  overflow-y: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE & Edge */
   animation: fadeIn 0.3s var(--ease-out);
+}
+
+.ob-page::-webkit-scrollbar {
+  display: none; /* Chrome, Safari & Opera */
 }
 
 /* Logo top-center */
@@ -2089,7 +2095,7 @@ body {
   align-items: center;
   justify-content: center;
   width: 100%;
-  padding: 0 24px;
+  padding: 24px;
 }
 
 /* Each slide */
