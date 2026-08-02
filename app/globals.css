@@ -2076,6 +2076,16 @@ body {
     overflow: hidden;
   }
 
+  /* Saat keyboard aktif di mobile, sembunyikan greeting agar input naik dan muat di atas keyboard */
+  .welcome-screen.keyboard-active .welcome-top {
+    display: none !important;
+  }
+  
+  .welcome-screen.keyboard-active .welcome-bottom {
+    transform: translateY(-50px);
+    transition: transform 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
+
   /* Greeting diletakkan di atas input dengan rapat */
   .welcome-top {
     flex: 0 0 auto;
@@ -2085,6 +2095,7 @@ body {
     justify-content: center;
     margin-bottom: 20px; /* Jarak rapat dari greeting ke input */
     padding-top: 10px;
+    transition: all 0.25s ease;
   }
 
   /* Input + chips di tengah layar */
@@ -2094,6 +2105,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
+    transition: transform 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
   }
 
   .welcome-greeting {
@@ -3397,6 +3409,18 @@ body {
   font-weight: 700;
 }
 
+/* Keyframes baru untuk modal yang posisinya fixed translate(-50%, -50%) agar transisi translasinya mulus dari tengah */
+@keyframes modalSlideCenter {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -46%) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
 /* Tampilan model selector dropdown diubah menjadi modal dialog di tengah layar agar seragam di semua device */
 .model-selector-dropdown {
   position: fixed;
@@ -3415,7 +3439,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  animation: modalSlideUp 0.2s ease;
+  animation: modalSlideCenter 0.2s ease;
 }
 
 /* Tambahkan overlay latar belakang gelap di belakang dropdown */

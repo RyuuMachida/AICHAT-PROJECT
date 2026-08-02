@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { IconSend, IconLoader, IconSparkle, IconCode, IconPencil, IconLightbulb, IconTarget, IconClip, IconMic, IconClose } from "./Icons";
 import { Attachment } from "./ChatInput";
 import { compressImage } from "@/lib/imageUtils";
@@ -67,6 +67,8 @@ export default function WelcomeScreen({
 }: WelcomeScreenProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [isFocused, setIsFocused] = useState(false);
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -137,7 +139,7 @@ export default function WelcomeScreen({
   const hasContent = value.trim() || attachments.length > 0;
 
   return (
-    <div className="welcome-screen" style={{ position: "relative", overflow: "hidden" }}>
+    <div className={`welcome-screen ${isFocused ? "keyboard-active" : ""}`} style={{ position: "relative", overflow: "hidden" }}>
       <Noise
         patternSize={250}
         patternScaleX={1}
@@ -201,6 +203,8 @@ export default function WelcomeScreen({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             onKeyDown={handleKeyDown}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
             rows={1}
             autoFocus
           />
