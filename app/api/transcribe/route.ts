@@ -51,18 +51,28 @@ export async function POST(req: NextRequest) {
 
     const groq = new Groq({ apiKey });
 
-    // Convert Blob to File object to be compatible with Groq SDK
-    const isWav = file.type?.includes("wav") || (file as unknown as { name?: string }).name?.endsWith(".wav");
-    const fileName = isWav ? "speech.wav" : "speech.webm";
-    const mimeType = isWav ? "audio/wav" : "audio/webm";
+    // Detect extension and mimeType from uploaded file
+    const uploadName = (file as unknown as { name?: string }).name || "";
+    let fileName = "speech.webm";
+    let mimeType = file.type || "audio/webm";
+
+    if (uploadName.endsWith(".wav") || mimeType.includes("wav")) {
+      fileName = "speech.wav";
+      mimeType = "audio/wav";
+    } else if (uploadName.endsWith(".mp4") || uploadName.endsWith(".m4a") || mimeType.includes("mp4") || mimeType.includes("aac")) {
+      fileName = "speech.m4a";
+      mimeType = "audio/mp4";
+    } else if (uploadName.endsWith(".ogg") || mimeType.includes("ogg")) {
+      fileName = "speech.ogg";
+      mimeType = "audio/ogg";
+    }
 
     const buffer = Buffer.from(await file.arrayBuffer());
 
     const transcription = await groq.audio.transcriptions.create({
       file: await Groq.toFile(buffer, fileName, { type: mimeType }),
-      model: "whisper-large-v3",
-      language: "id",
-      prompt: "Berikut adalah instruksi suara pengguna dalam bahasa Indonesia.",
+      model: "whisper-large-v3-turbo",
+      prompt: "Percakapan sehari-hari bahasa Indonesia.",
       response_format: "json",
       temperature: 0.0,
     });

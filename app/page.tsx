@@ -529,11 +529,18 @@ export default function Home() {
       });
 
       let mimeType = "audio/webm";
+      let fileExt = "webm";
+
       if (typeof MediaRecorder !== "undefined") {
         if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
           mimeType = "audio/webm;codecs=opus";
+          fileExt = "webm";
         } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
           mimeType = "audio/mp4";
+          fileExt = "m4a";
+        } else if (MediaRecorder.isTypeSupported("audio/aac")) {
+          mimeType = "audio/aac";
+          fileExt = "aac";
         }
       }
 
@@ -559,7 +566,7 @@ export default function Home() {
         setIsLoading(true);
 
         const formData = new FormData();
-        formData.append("file", audioBlob, "recording.webm");
+        formData.append("file", audioBlob, `recording.${fileExt}`);
 
         try {
           const response = await fetch("/api/transcribe", {
@@ -888,7 +895,7 @@ export default function Home() {
           ) : (
             <span className="mobile-topbar-title" style={{ display: "flex", alignItems: "center", gap: 7 }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/icon.svg" alt="Ryuu AI logo" width={20} height={20} style={{ borderRadius: 5 }} />
+              <img src="/logo&brand.jpeg" alt="Ryuu AI logo" width={20} height={20} style={{ borderRadius: 5 }} />
               Ryuu AI
             </span>
           )}
