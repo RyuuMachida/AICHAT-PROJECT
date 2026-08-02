@@ -122,7 +122,6 @@ export default function SettingsView({
                 onChange={(e) => onEmailChange(e.target.value)}
                 placeholder="contoh@email.com"
               />
-              <p className="settings-help-text">Ditampilkan di profil sidebar.</p>
             </div>
           </section>
 

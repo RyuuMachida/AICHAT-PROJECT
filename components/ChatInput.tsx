@@ -137,10 +137,6 @@ export default function ChatInput({
         {/* Text Area or Recording Wave */}
         {isRecording ? (
           <div className="recording-wave-container">
-            <div className="recording-badge">
-              <span className="recording-indicator-dot" />
-              <span className="recording-status-text">Merekam Suara...</span>
-            </div>
             <div className="recording-soundwave-bars">
               <span className="soundwave-bar bar-1" />
               <span className="soundwave-bar bar-2" />

@@ -2058,7 +2058,6 @@ body {
     padding-top: 52px; /* offset untuk fixed mobile-topbar */
   }
 
-  /* Sembunyikan chat-top-bar di mobile — sudah digantikan oleh mobile-topbar */
   .chat-top-bar { display: none !important; }
 
   .chat-inner { padding: 12px 12px 16px; gap: 28px; max-width: 100%; margin-top: 12px !important; }
@@ -2069,14 +2068,13 @@ body {
   .welcome-screen {
     display: flex;
     flex-direction: column;
-    justify-content: center; /* Ketengahin secara vertikal */
+    justify-content: center; 
     align-items: center;
     padding: 16px;
     height: 100%;
     overflow: hidden;
   }
 
-  /* Saat keyboard aktif di mobile, sembunyikan greeting agar input naik dan muat di atas keyboard */
   .welcome-screen.keyboard-active .welcome-top {
     display: none !important;
   }
