@@ -142,18 +142,14 @@ Pedoman & Aturan Respons:
       systemPrompt += `\n\n[MEMORI DATA DIRI & PROFILE PENGGUNA TERUPDATE (DIINGAT AI)]:\n${safeCharacteristics}\n\nCatatan Penting Memori:\nGunakan data diri dan fakta pengguna di atas untuk merespons secara personal, kontekstual, dan berkesinambungan. Pengguna tidak perlu mengulang informasi data diri (sekolah, pekerjaan, lokasi, dll) yang sudah tercatat di atas.`;
     }
 
-    // Gunakan SDK GoogleGenAI jika provider adalah gemini biasa, gemini-new, atau butuh Vision
-    const useGeminiFamily = selectedProvider === "gemini" || selectedProvider === "gemini-new" || isVisionNeeded;
+    // Use Gemini for multimodal image requests or when Gemini provider is explicitly selected
+    const useGemini = selectedProvider === "gemini" || isVisionNeeded;
 
-    if (useGeminiFamily) {
-      // Tentukan api key dan nama model secara dinamis
-      const isNewGemini = selectedProvider === "gemini-new";
-      const geminiApiKey = isNewGemini ? process.env.GEMINI_NEW_API_KEY : process.env.GEMINI_API_KEY;
-      const modelName = isNewGemini ? "gemini-2.5-flash" : "gemini-2.5-flash";
-
+    if (useGemini) {
+      const geminiApiKey = process.env.GEMINI_API_KEY;
       if (!geminiApiKey) {
         return new Response(
-          JSON.stringify({ error: `${isNewGemini ? "GEMINI_NEW_API_KEY" : "GEMINI_API_KEY"} belum diatur di file .env.local.`, setup: true }),
+          JSON.stringify({ error: "GEMINI_API_KEY belum diatur di file .env.local.", setup: true }),
           { status: 400, headers: applySecurityHeaders({ "Content-Type": "application/json" }) }
         );
       }
@@ -191,7 +187,7 @@ Pedoman & Aturan Respons:
       });
 
       const responseStream = await ai.models.generateContentStream({
-        model: modelName,
+        model: "gemini-2.5-flash",
         contents: geminiContents as any,
         config: {
           systemInstruction: systemPrompt,

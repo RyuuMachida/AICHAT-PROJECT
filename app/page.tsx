@@ -37,7 +37,7 @@ interface Message {
   content: string | any[]; // string or array for multimodal support
   timestamp: string;
   attachments?: MessageAttachment[]; // file/image attachments stored separately for display
-  provider?: "gemini" | "groq" | "gemini-new"; // which model answered this message
+  provider?: "gemini" | "groq"; // which model answered this message
   groundingSources?: { title: string; url: string }[]; // web search citations from Gemini
 }
 

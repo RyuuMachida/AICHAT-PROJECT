@@ -19,7 +19,7 @@ interface ChatMessageProps {
   attachments?: FileAttachment[];
   userPhoto?: string | null;
   username?: string;
-  provider?: "gemini" | "groq" | "gemini-new";
+  provider?: "gemini" | "groq";
   groundingSources?: { title: string; url: string }[];
 }
 

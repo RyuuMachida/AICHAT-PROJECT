@@ -23,7 +23,7 @@ export interface MessageAttachment {
 export interface Conversation {
   id: string;
   title: string;
-  messages: { role: "user" | "assistant"; content: string | any[]; timestamp: string; attachments?: MessageAttachment[]; provider?: "gemini" | "groq" | "gemini-new" }[];
+  messages: { role: "user" | "assistant"; content: string | any[]; timestamp: string; attachments?: MessageAttachment[]; provider?: "gemini" | "groq" }[];
   createdAt: string;
   pinned?: boolean;
 }
