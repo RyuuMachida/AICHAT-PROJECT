@@ -149,7 +149,7 @@ Pedoman & Aturan Respons:
       // Tentukan api key dan nama model secara dinamis
       const isNewGemini = selectedProvider === "gemini-new";
       const geminiApiKey = isNewGemini ? process.env.GEMINI_NEW_API_KEY : process.env.GEMINI_API_KEY;
-      const modelName = isNewGemini ? "gemini-3.1-pro" : "gemini-2.5-flash";
+      const modelName = isNewGemini ? "gemini-2.5-pro" : "gemini-2.5-flash";
 
       if (!geminiApiKey) {
         return new Response(
