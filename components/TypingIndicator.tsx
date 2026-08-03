@@ -3,7 +3,7 @@
 import React from "react";
 
 interface TypingIndicatorProps {
-  provider?: "gemini" | "groq";
+  provider?: "gemini" | "groq" | "gemini-new";
 }
 
 export default function TypingIndicator({ provider = "gemini" }: TypingIndicatorProps) {

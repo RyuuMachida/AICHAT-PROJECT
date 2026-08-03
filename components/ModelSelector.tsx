@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { IconSparkle, IconBolt } from "./Icons";
 
-export type AIProvider = "gemini" | "groq";
+export type AIProvider = "gemini" | "groq" | "gemini-new";
 
 interface ModelSelectorProps {
   provider: AIProvider;
@@ -19,6 +19,14 @@ const PROVIDER_CONFIGS = {
     rpmLimit: 15,
     tag: "Vision + Text (Super Presisi)",
     iconColor: "#4285F4",
+  },
+  "gemini-new": {
+    id: "gemini-new" as AIProvider,
+    name: "Google Gemini 3.1 Pro",
+    shortName: "Gemini 3.1 Pro",
+    rpmLimit: 15,
+    tag: "Frontier (Advanced Reasoning)",
+    iconColor: "#8E2DE2",
   },
   groq: {
     id: "groq" as AIProvider,
