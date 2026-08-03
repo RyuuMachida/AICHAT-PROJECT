@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import { IconSparkle, IconBolt } from "./Icons";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 
 export type AIProvider = "gemini" | "groq";
 
@@ -37,7 +37,12 @@ export default function ModelSelector({
 }: ModelSelectorProps) {
   const [open, setOpen] = useState(false);
   const [now, setNow] = useState(Date.now());
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  // Ensure we're mounted client-side before using portal
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Update current time every second to calculate live 60-second sliding window
   useEffect(() => {
@@ -45,16 +50,15 @@ export default function ModelSelector({
     return () => clearInterval(timer);
   }, []);
 
-  // Close dropdown when clicking outside
+  // Close on Escape key
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
+    if (!open) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [open]);
 
   // Calculate requests sent in the last 60 seconds
   const windowStart = now - 60000;
@@ -64,11 +68,16 @@ export default function ModelSelector({
   const remainingRPM = Math.max(0, activeConfig.rpmLimit - requestsInLastMinute);
   const isLowLimit = remainingRPM <= 3;
 
+  const handleSelect = (key: AIProvider) => {
+    onSelectProvider(key);
+    setOpen(false);
+  };
+
   return (
-    <div className="model-selector-container" ref={dropdownRef}>
+    <div className="model-selector-container">
       <button
         className={`model-selector-btn ${isLowLimit ? "warning" : ""}`}
-        onClick={() => setOpen(!open)}
+        onClick={() => setOpen((prev) => !prev)}
         title="Ganti AI Model & Cek Rate Limit"
       >
         <span className="model-status-dot" style={{ background: isLowLimit ? "#FFA000" : "#4CAF50" }} />
@@ -79,9 +88,14 @@ export default function ModelSelector({
         </span>
       </button>
 
-      {open && typeof document !== "undefined" && require("react-dom").createPortal(
+      {open && mounted && createPortal(
         <>
-          <div className="model-selector-backdrop" onClick={() => setOpen(false)} />
+          {/* Backdrop — klik untuk tutup */}
+          <div
+            className="model-selector-backdrop"
+            onMouseDown={() => setOpen(false)}
+          />
+          {/* Modal dropdown */}
           <div className="model-selector-dropdown">
             <div className="model-dropdown-header">
               <span>PILIH PROVIDER AI</span>
@@ -98,15 +112,14 @@ export default function ModelSelector({
                 <button
                   key={key}
                   className={`model-dropdown-item ${isSelected ? "selected" : ""}`}
-                  onClick={() => {
-                    onSelectProvider(key);
-                    setOpen(false);
+                  onMouseDown={(e) => {
+                    e.stopPropagation();
+                    handleSelect(key);
                   }}
                 >
                   <div className="model-item-left">
                     <div className="model-item-title-row">
                       <span className="model-item-title">{cfg.name}</span>
-                      {isSelected}
                     </div>
                     <span className="model-item-tag">{cfg.tag}</span>
                   </div>
