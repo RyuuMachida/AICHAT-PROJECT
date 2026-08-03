@@ -79,7 +79,7 @@ export default function ModelSelector({
         </span>
       </button>
 
-      {open && (
+      {open && typeof document !== "undefined" && require("react-dom").createPortal(
         <>
           <div className="model-selector-backdrop" onClick={() => setOpen(false)} />
           <div className="model-selector-dropdown">
@@ -119,7 +119,8 @@ export default function ModelSelector({
               );
             })}
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   );
