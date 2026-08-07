@@ -1,5 +1,4 @@
 import Groq from "groq-sdk";
-import { GoogleGenAI } from "@google/genai";
 import { NextRequest } from "next/server";
 import {
   checkRateLimit,
@@ -11,6 +10,7 @@ import {
   applySecurityHeaders,
   errorResponse,
 } from "@/lib/security";
+import { MODEL_CONFIGS, DEFAULT_MODEL_ID, isValidModelId } from "@/lib/models";
 
 export async function POST(req: NextRequest) {
   // ── 1. Rate Limiting ───────────────────────────────────────────────────
@@ -52,7 +52,6 @@ export async function POST(req: NextRequest) {
     // Sanitasi username & userCharacteristics
     const safeUsername = validateUsername(username);
     const safeCharacteristics = sanitizeString(userCharacteristics, 5000);
-    const selectedProvider = typeof provider === "string" ? provider : "gemini";
 
     let isVisionNeeded = false;
     for (const msg of sanitizedMessages) {
@@ -63,6 +62,18 @@ export async function POST(req: NextRequest) {
         }
       }
     }
+
+    // "provider" di body sekarang berisi salah satu ModelId (mis. "gemini-3.6-flash", "groq-llama-3.3"),
+    // bukan cuma "gemini"/"groq" seperti sebelumnya. Tetap kompatibel dengan value lama.
+    let selectedModelId = isValidModelId(provider) ? provider : DEFAULT_MODEL_ID;
+
+    // Kalau ada gambar tapi model yang dipilih bukan Gemini (Groq belum bisa vision),
+    // fallback otomatis ke Gemini default supaya request tidak gagal.
+    if (isVisionNeeded && MODEL_CONFIGS[selectedModelId].provider !== "gemini") {
+      selectedModelId = DEFAULT_MODEL_ID;
+    }
+
+    const modelConfig = MODEL_CONFIGS[selectedModelId];
 
     // ── Real-time Timestamp ──────────────────────────────────────────────────
     // Inject waktu saat ini agar AI tidak buta waktu, terlepas dari cutoff training data
@@ -142,21 +153,25 @@ Pedoman & Aturan Respons:
       systemPrompt += `\n\n[MEMORI DATA DIRI & PROFILE PENGGUNA TERUPDATE (DIINGAT AI)]:\n${safeCharacteristics}\n\nCatatan Penting Memori:\nGunakan data diri dan fakta pengguna di atas untuk merespons secara personal, kontekstual, dan berkesinambungan. Pengguna tidak perlu mengulang informasi data diri (sekolah, pekerjaan, lokasi, dll) yang sudah tercatat di atas.`;
     }
 
-    // Use Gemini for multimodal image requests or when Gemini provider is explicitly selected
-    const useGemini = selectedProvider === "gemini" || isVisionNeeded;
+    const useGemini = modelConfig.provider === "gemini";
 
     if (useGemini) {
-      const geminiApiKey = process.env.GEMINI_API_KEY;
+      const geminiApiKey = process.env[modelConfig.apiKeyEnv];
       if (!geminiApiKey) {
         return new Response(
-          JSON.stringify({ error: "GEMINI_API_KEY belum diatur di file .env.local.", setup: true }),
+          JSON.stringify({
+            error: `${modelConfig.apiKeyEnv} belum diatur di file .env.local.`,
+            setup: true,
+          }),
           { status: 400, headers: applySecurityHeaders({ "Content-Type": "application/json" }) }
         );
       }
 
-      const ai = new GoogleGenAI({ apiKey: geminiApiKey });
+      // ── Gemini Direct Fetch (Bypass SDK) ────────────────────────────────
+      // Grounding hanya untuk 2.5 (quota lebih besar), disable untuk 3.5/3.6
+      const useGrounding = modelConfig.apiName === "gemini-2.5-flash";
 
-      // Format messages into Gemini contents array
+      // Format contents untuk Gemini API
       const geminiContents = sanitizedMessages.map((msg) => {
         const role = msg.role === "assistant" ? "model" : "user";
 
@@ -186,80 +201,179 @@ Pedoman & Aturan Respons:
         };
       });
 
-      const responseStream = await ai.models.generateContentStream({
-        model: "gemini-2.5-flash",
-        contents: geminiContents as any,
-        config: {
-          systemInstruction: systemPrompt,
-          temperature: 0.7,
-          // Aktifkan Google Search Grounding — Gemini otomatis browse web
-          // jika data training tidak cukup / outdated
-          tools: [{ googleSearch: {} }],
-        },
-      });
+      try {
+        // Call Gemini API langsung via fetch dengan streaming
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${modelConfig.apiName}:streamGenerateContent?alt=sse&key=${geminiApiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: geminiContents,
+              systemInstruction: {
+                role: "user",
+                parts: [{ text: systemPrompt }],
+              },
+              generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: 4096,
+              },
+              // Google Search Grounding — hanya untuk 2.5, disable untuk 3.5/3.6
+              ...(useGrounding ? { tools: [{ googleSearch: {} }] } : {}),
+            }),
+          }
+        );
 
-      const encoder = new TextEncoder();
-      const readableStream = new ReadableStream({
-        async start(controller) {
-          try {
-            // Kumpulkan semua grounding sources dari semua chunks
-            const groundingSources: { title: string; url: string }[] = [];
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          const errorMsg = errorData?.error?.message || response.statusText;
 
-            for await (const chunk of responseStream) {
-              const text = chunk.text;
-              if (text) {
-                controller.enqueue(
-                  encoder.encode(`data: ${JSON.stringify({ content: text })}\n\n`)
-                );
+          console.error(`Gemini API error (${response.status}):`, errorMsg);
+
+          const isQuotaError = response.status === 429 || /RESOURCE_EXHAUSTED|429/.test(errorMsg);
+
+          if (isQuotaError) {
+            return new Response(
+              JSON.stringify({
+                error: `Kuota untuk model ${modelConfig.label} (key ${modelConfig.apiKeyEnv}) sudah habis untuk saat ini. Coba pilih model lain, atau tunggu kuota reset.`,
+                code: 429,
+                setup: false,
+              }),
+              { status: 429, headers: applySecurityHeaders({ "Content-Type": "application/json" }) }
+            );
+          }
+
+          return new Response(
+            JSON.stringify({
+              error: `Gagal menghubungi ${modelConfig.label}: ${errorMsg || "kesalahan tidak diketahui."}`,
+              setup: false,
+            }),
+            { status: 502, headers: applySecurityHeaders({ "Content-Type": "application/json" }) }
+          );
+        }
+
+        // Stream response dari Gemini
+        const encoder = new TextEncoder();
+        const readableStream = new ReadableStream({
+          async start(controller) {
+            try {
+              const groundingSources: { title: string; url: string }[] = [];
+
+              if (!response.body) {
+                throw new Error("Response body is null");
               }
 
-              // Ekstrak grounding metadata (search result sources)
-              const meta = (chunk as any)?.candidates?.[0]?.groundingMetadata;
-              if (meta?.groundingChunks) {
-                for (const gc of meta.groundingChunks) {
-                  const web = gc?.web;
-                  if (web?.uri && web?.title) {
-                    const alreadyAdded = groundingSources.some((s) => s.url === web.uri);
-                    if (!alreadyAdded) {
-                      groundingSources.push({ title: web.title, url: web.uri });
+              const reader = response.body.getReader();
+              const decoder = new TextDecoder();
+              let buffer = "";
+
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split("\n");
+                buffer = lines.pop() || "";
+
+                for (const line of lines) {
+                  if (line.startsWith("data: ")) {
+                    const jsonStr = line.slice(6).trim();
+                    if (!jsonStr) continue;
+
+                    try {
+                      const chunk = JSON.parse(jsonStr);
+
+                      // Extract text content
+                      if (chunk.candidates?.[0]?.content?.parts) {
+                        for (const part of chunk.candidates[0].content.parts) {
+                          if (part.text) {
+                            controller.enqueue(
+                              encoder.encode(`data: ${JSON.stringify({ content: part.text })}\n\n`)
+                            );
+                          }
+                        }
+                      }
+
+                      // Extract grounding sources
+                      const meta = chunk.candidates?.[0]?.groundingMetadata;
+                      if (meta?.groundingChunks) {
+                        for (const gc of meta.groundingChunks) {
+                          const web = gc?.web;
+                          if (web?.uri && web?.title) {
+                            const alreadyAdded = groundingSources.some((s) => s.url === web.uri);
+                            if (!alreadyAdded) {
+                              groundingSources.push({ title: web.title, url: web.uri });
+                            }
+                          }
+                        }
+                      }
+                    } catch (e) {
+                      console.error("JSON parse error in stream:", e);
                     }
                   }
                 }
               }
-            }
 
-            // Kirim sources sebelum [DONE] jika ada hasil pencarian web
-            if (groundingSources.length > 0) {
+              // Send grounding sources if any
+              if (groundingSources.length > 0) {
+                controller.enqueue(
+                  encoder.encode(`data: ${JSON.stringify({ sources: groundingSources })}\n\n`)
+                );
+              }
+
+              controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+              controller.close();
+            } catch (e) {
+              console.error("Gemini Stream error:", e);
               controller.enqueue(
-                encoder.encode(`data: ${JSON.stringify({ sources: groundingSources })}\n\n`)
+                encoder.encode(`data: ${JSON.stringify({ error: "Stream error" })}\n\n`)
               );
+              controller.close();
             }
+          },
+        });
 
-            controller.enqueue(encoder.encode("data: [DONE]\n\n"));
-            controller.close();
-          } catch (e) {
-            console.error("Gemini Stream error:", e);
-            controller.enqueue(
-              encoder.encode(`data: ${JSON.stringify({ error: "Stream error" })}\n\n`)
-            );
-            controller.close();
-          }
-        },
-      });
+        return new Response(readableStream, {
+          headers: applySecurityHeaders({
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache",
+            Connection: "keep-alive",
+          }),
+        });
+      } catch (err: any) {
+        console.error("Gemini fetch error:", err);
 
-      return new Response(readableStream, {
-        headers: applySecurityHeaders({
-          "Content-Type": "text/event-stream",
-          "Cache-Control": "no-cache",
-          Connection: "keep-alive",
-        }),
-      });
+        const rawMessage: string = err?.message || "";
+        const isQuotaError = /RESOURCE_EXHAUSTED|429/.test(rawMessage);
+
+        if (isQuotaError) {
+          return new Response(
+            JSON.stringify({
+              error: `Kuota untuk model ${modelConfig.label} sudah habis. Coba model lain atau tunggu reset.`,
+              code: 429,
+              setup: false,
+            }),
+            { status: 429, headers: applySecurityHeaders({ "Content-Type": "application/json" }) }
+          );
+        }
+
+        return new Response(
+          JSON.stringify({
+            error: `Gagal menghubungi ${modelConfig.label}: ${rawMessage || "kesalahan tidak diketahui."}`,
+            setup: false,
+          }),
+          { status: 502, headers: applySecurityHeaders({ "Content-Type": "application/json" }) }
+        );
+      }
     } else {
-      // Use Groq Llama for text-only requests when Groq is selected
-      const apiKey = process.env.GROQ_API_KEY;
+      // Provider non-Gemini (mis. Groq) — pakai SDK (Groq tidak ada issue)
+      const apiKey = process.env[modelConfig.apiKeyEnv];
       if (!apiKey || apiKey === "your_api_key_here") {
         return new Response(
-          JSON.stringify({ error: "GROQ_API_KEY belum diatur di server.", setup: true }),
+          JSON.stringify({
+            error: `${modelConfig.apiKeyEnv} belum diatur di server.`,
+            setup: true,
+          }),
           { status: 400, headers: applySecurityHeaders({ "Content-Type": "application/json" }) }
         );
       }
@@ -286,13 +400,40 @@ Pedoman & Aturan Respons:
         }),
       ];
 
-      const stream = await groq.chat.completions.create({
-        model: "llama-3.3-70b-versatile",
-        messages: chatMessages as any,
-        temperature: 0.7,
-        max_tokens: 4096,
-        stream: true,
-      });
+      let stream;
+      try {
+        stream = await groq.chat.completions.create({
+          model: modelConfig.apiName,
+          messages: chatMessages as any,
+          temperature: 0.7,
+          max_tokens: 4096,
+          stream: true,
+        });
+      } catch (err: any) {
+        console.error("Groq init error:", err);
+
+        const rawMessage: string = err?.message || "";
+        const isQuotaError = err?.status === 429 || /429|rate.?limit/i.test(rawMessage);
+
+        if (isQuotaError) {
+          return new Response(
+            JSON.stringify({
+              error: `Kuota untuk model ${modelConfig.label} sudah habis untuk saat ini. Coba pilih model lain, atau tunggu kuota reset.`,
+              code: 429,
+              setup: false,
+            }),
+            { status: 429, headers: applySecurityHeaders({ "Content-Type": "application/json" }) }
+          );
+        }
+
+        return new Response(
+          JSON.stringify({
+            error: `Gagal menghubungi ${modelConfig.label}: ${rawMessage || "kesalahan tidak diketahui."}`,
+            setup: false,
+          }),
+          { status: 502, headers: applySecurityHeaders({ "Content-Type": "application/json" }) }
+        );
+      }
 
       const encoder = new TextEncoder();
       const readableStream = new ReadableStream({

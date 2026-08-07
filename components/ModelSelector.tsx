@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { MODEL_CONFIGS, ModelId, AIProvider } from "@/lib/models";
 
-export type AIProvider = "gemini" | "groq";
+// AIProvider = ModelId (alias dipertahankan supaya import lama tetap jalan)
+export type { AIProvider };
 
 interface ModelSelectorProps {
   provider: AIProvider;
@@ -11,24 +13,13 @@ interface ModelSelectorProps {
   requestHistory: number[]; // timestamps of requests in milliseconds
 }
 
-const PROVIDER_CONFIGS = {
-  gemini: {
-    id: "gemini" as AIProvider,
-    name: "Google Gemini 2.5 Flash",
-    shortName: "Gemini 2.5",
-    rpmLimit: 15,
-    tag: "Vision + Text (Super Presisi)",
-    iconColor: "#4285F4",
-  },
-  groq: {
-    id: "groq" as AIProvider,
-    name: "Groq Llama 3.3 70B",
-    shortName: "Llama 3.3",
-    rpmLimit: 30,
-    tag: "Ultra Fast Inference",
-    iconColor: "#FFCE99",
-  },
-};
+const MODEL_ORDER: ModelId[] = [
+  "gemini-2.5-flash",
+  "gemini-3.5-flash-lite",
+  "gemini-3.5-flash",
+  "gemini-3.6-flash",
+  "groq-llama-3.3",
+];
 
 export default function ModelSelector({
   provider,
@@ -39,18 +30,15 @@ export default function ModelSelector({
   const [now, setNow] = useState(Date.now());
   const [mounted, setMounted] = useState(false);
 
-  // Ensure we're mounted client-side before using portal
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Update current time every second to calculate live 60-second sliding window
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // Close on Escape key
   useEffect(() => {
     if (!open) return;
     const handleKey = (e: KeyboardEvent) => {
@@ -60,15 +48,14 @@ export default function ModelSelector({
     return () => document.removeEventListener("keydown", handleKey);
   }, [open]);
 
-  // Calculate requests sent in the last 60 seconds
   const windowStart = now - 60000;
   const requestsInLastMinute = requestHistory.filter((ts) => ts > windowStart).length;
 
-  const activeConfig = PROVIDER_CONFIGS[provider] || PROVIDER_CONFIGS.gemini;
+  const activeConfig = MODEL_CONFIGS[provider] || MODEL_CONFIGS["gemini-2.5-flash"];
   const remainingRPM = Math.max(0, activeConfig.rpmLimit - requestsInLastMinute);
   const isLowLimit = remainingRPM <= 3;
 
-  const handleSelect = (key: AIProvider) => {
+  const handleSelect = (key: ModelId) => {
     onSelectProvider(key);
     setOpen(false);
   };
@@ -81,7 +68,7 @@ export default function ModelSelector({
         title="Ganti AI Model & Cek Rate Limit"
       >
         <span className="model-status-dot" style={{ background: isLowLimit ? "#FFA000" : "#4CAF50" }} />
-        <span className="model-selector-name">{activeConfig.shortName}</span>
+        <span className="model-selector-name">{activeConfig.shortLabel}</span>
         <span className="model-selector-divider">•</span>
         <span className={`model-selector-limit ${isLowLimit ? "limit-warning" : ""}`}>
           {remainingRPM}/{activeConfig.rpmLimit} RPM
@@ -90,20 +77,18 @@ export default function ModelSelector({
 
       {open && mounted && createPortal(
         <>
-          {/* Backdrop — klik untuk tutup */}
           <div
             className="model-selector-backdrop"
             onMouseDown={() => setOpen(false)}
           />
-          {/* Modal dropdown */}
           <div className="model-selector-dropdown">
             <div className="model-dropdown-header">
-              <span>PILIH PROVIDER AI</span>
+              <span>PILIH MODEL AI</span>
               <span className="model-dropdown-subtitle">Limit diperbarui realtime</span>
             </div>
 
-            {(Object.keys(PROVIDER_CONFIGS) as AIProvider[]).map((key) => {
-              const cfg = PROVIDER_CONFIGS[key];
+            {MODEL_ORDER.map((key) => {
+              const cfg = MODEL_CONFIGS[key];
               const isSelected = key === provider;
               const provReqs = requestHistory.filter((ts) => ts > windowStart).length;
               const provRemaining = Math.max(0, cfg.rpmLimit - provReqs);
@@ -119,7 +104,7 @@ export default function ModelSelector({
                 >
                   <div className="model-item-left">
                     <div className="model-item-title-row">
-                      <span className="model-item-title">{cfg.name}</span>
+                      <span className="model-item-title">{cfg.label}</span>
                     </div>
                     <span className="model-item-tag">{cfg.tag}</span>
                   </div>

@@ -1,33 +1,39 @@
-import Groq from "groq-sdk";
+import { GoogleGenAI } from "@google/genai";
 import { NextRequest } from "next/server";
 import {
   checkRateLimit,
   getClientIP,
   isPayloadTooLarge,
-  sanitizeString,
-  validateUsername,
+  validateMessages,
   applySecurityHeaders,
   errorResponse,
 } from "@/lib/security";
+import { MODEL_CONFIGS } from "@/lib/models";
+const EXTRACTION_MODEL_ID = "gemini-3.5-flash-lite" as const;
+
+const EXTRACTION_SYSTEM_PROMPT = `Anda adalah modul ekstraksi karakteristik pengguna untuk aplikasi chatbot.
+Tugas Anda HANYA: baca histori percakapan yang diberikan, lalu simpulkan fakta-fakta singkat, faktual, dan relevan tentang penggunanya (misalnya: nama, pekerjaan/sekolah, minat, preferensi, konteks penting lain yang disebutkan).
+
+Aturan:
+- Jangan menyapa, jangan menjawab pertanyaan user, jangan berperan sebagai asisten chat.
+- Keluarkan HANYA daftar poin singkat (bullet list), bahasa Indonesia, tanpa basa-basi pembuka/penutup.
+- Kalau tidak ada informasi baru yang bisa disimpulkan, keluarkan teks kosong.
+- Maksimal 8 poin, tiap poin maksimal 1 baris.`;
 
 export async function POST(req: NextRequest) {
-  // ── 1. Rate Limiting ───────────────────────────────────────────────────
   const ip = getClientIP(req);
-  const rateCheck = checkRateLimit(ip, 15, 60); // 15 req/menit per IP
+  const rateCheck = checkRateLimit(ip, 30, 60);
   if (!rateCheck.allowed) {
     return errorResponse("Terlalu banyak request. Coba lagi nanti.", 429, {
       retryAfter: rateCheck.retryAfter,
     });
   }
 
-  // ── 2. Payload Size Guard ──────────────────────────────────────────────
   if (isPayloadTooLarge(req)) {
-    return errorResponse("Payload terlalu besar.", 413);
+    return errorResponse("Payload terlalu besar (maks 5 MB).", 413);
   }
 
-  let existingCharacteristics = "";
   try {
-    // ── 3. Parse & Validasi Body ─────────────────────────────────────────
     let body: unknown;
     try {
       body = await req.json();
@@ -39,110 +45,86 @@ export async function POST(req: NextRequest) {
       return errorResponse("Body request tidak valid.", 400);
     }
 
-    const rawBody = body as Record<string, unknown>;
-    existingCharacteristics = sanitizeString(rawBody.existingCharacteristics, 5000);
-    const messages = rawBody.messages;
-    const username = validateUsername(rawBody.username);
+    const { messages } = body as Record<string, unknown>;
 
-    const apiKey = process.env.GROQ_API_KEY;
+    const msgValidation = validateMessages(messages);
+    if (!msgValidation.valid) {
+      return errorResponse(msgValidation.reason ?? "messages tidak valid.", 400);
+    }
+    const sanitizedMessages = msgValidation.sanitized!;
 
-    if (!apiKey || apiKey === "your_api_key_here") {
+    const modelConfig = MODEL_CONFIGS[EXTRACTION_MODEL_ID];
+    const geminiApiKey = process.env[modelConfig.apiKeyEnv];
+
+    if (!geminiApiKey) {
       return new Response(
-        JSON.stringify({ characteristics: existingCharacteristics || "" }),
-        {
-          status: 200,
-          headers: applySecurityHeaders({ "Content-Type": "application/json" }),
-        }
+        JSON.stringify({
+          error: `${modelConfig.apiKeyEnv} belum diatur di file .env.local.`,
+          setup: true,
+        }),
+        { status: 400, headers: applySecurityHeaders({ "Content-Type": "application/json" }) }
       );
     }
 
-    const groq = new Groq({ apiKey });
+    const ai = new GoogleGenAI({ apiKey: geminiApiKey });
 
-    // Validasi messages array
-    if (!Array.isArray(messages)) {
+    const geminiContents = sanitizedMessages
+      .filter((msg) => msg.role === "user")
+      .map((msg) => {
+        const text = Array.isArray(msg.content)
+          ? (msg.content as Array<{ type?: string; text?: string }>)
+            .filter((item) => item.type === "text")
+            .map((item) => item.text)
+            .join(" ")
+          : typeof msg.content === "string"
+            ? msg.content
+            : "";
+        return { role: "user", parts: [{ text }] };
+      });
+
+    let result;
+    try {
+      result = await ai.models.generateContent({
+        model: modelConfig.apiName,
+        contents: geminiContents as any,
+        config: {
+          systemInstruction: EXTRACTION_SYSTEM_PROMPT,
+          temperature: 0.3,
+          maxOutputTokens: 300,
+        },
+      });
+    } catch (err: any) {
+      console.error("Extract-characteristics Gemini error:", err);
+
+      const rawMessage: string = err?.message || "";
+      const isQuotaError =
+        err?.status === 429 ||
+        err?.error?.code === 429 ||
+        /RESOURCE_EXHAUSTED|429/i.test(rawMessage);
+
+      if (isQuotaError) {
+        // Bukan endpoint kritis untuk UX chat utama — gagal diam-diam saja dengan status 429
+        // biar frontend bisa skip update karakteristik tanpa mengganggu chat.
+        return new Response(
+          JSON.stringify({ error: "Kuota ekstraksi karakteristik sedang habis.", code: 429 }),
+          { status: 429, headers: applySecurityHeaders({ "Content-Type": "application/json" }) }
+        );
+      }
+
       return new Response(
-        JSON.stringify({ characteristics: existingCharacteristics || "" }),
-        {
-          status: 200,
-          headers: applySecurityHeaders({ "Content-Type": "application/json" }),
-        }
+        JSON.stringify({ error: `Gagal ekstraksi karakteristik: ${rawMessage || "unknown"}` }),
+        { status: 502, headers: applySecurityHeaders({ "Content-Type": "application/json" }) }
       );
     }
 
-    const userText = messages
-      .filter((m: unknown) => {
-        if (typeof m !== "object" || m === null) return false;
-        return (m as Record<string, unknown>).role === "user";
-      })
-      .map((m: unknown) => {
-        const msg = m as Record<string, unknown>;
-        return typeof msg.content === "string"
-          ? sanitizeString(msg.content, 5000)
-          : JSON.stringify(msg.content).slice(0, 2000);
-      })
-      .slice(-6)
-      .join("\n");
-
-    if (!userText.trim()) {
-      return new Response(
-        JSON.stringify({ characteristics: existingCharacteristics || "" }),
-        {
-          status: 200,
-          headers: applySecurityHeaders({ "Content-Type": "application/json" }),
-        }
-      );
-    }
-
-    const safeUsername = username || "User";
-
-    const prompt = `Anda adalah sistem memori analitik AI yang bertugas membangun dan mengelola profil data diri pengguna secara otomatis dan kumulatif dari percakapan.
-
-Nama pengguna saat ini: ${safeUsername}
-
-PROFIL DATA DIRI YANG SUDAH TERCEK KAN SAAT INI:
-${existingCharacteristics ? existingCharacteristics : "(Belum ada data diri yang tercatat)"}
-
-PESAN PERCAKAPAN TERBARU:
-${userText}
-
-TUGAS ANDA:
-1. Analisis seluruh pesan pengguna di atas. Identifikasi dan ekstrak SEMUA informasi data diri baru yang disebutkan oleh pengguna (misal: asal sekolah/universitas, jurusan, pekerjaan/profesi, tempat tinggal/kota, usia, hobi/minat, proyek yang dikerjakan, bahasa pemrograman favorit, kebiasaan, makanan favorit, dll).
-2. Gabungkan fakta data diri baru tersebut dengan profil lama tanpa menghapus informasi lama yang masih relevan.
-3. Format hasil akhir dalam bentuk poin-poin ringkas yang terorganisir (misal:
-   - Nama: ${safeUsername}
-   - Pendidikan/Sekolah: ...
-   - Pekerjaan/Profesi: ...
-   - Lokasi: ...
-   - Minat & Tech Stack: ...
-   - Catatan/Preferensi Lain: ...).
-4. Jika tidak ada fakta data diri baru yang dapat diekstrak dari percakapan terbaru, KEMBALIKAN SELURUH TEKS PROFIL LAMA tanpa diubah sedikit pun.
-5. CUKUP hasilkan daftar poin data diri tersebut. JANGAN tambahkan teks pembuka, penutup, atau salam.`;
-
-    const res = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.2,
-      max_tokens: 500,
-    });
-
-    const characteristics = res.choices[0]?.message?.content?.trim() || existingCharacteristics || "";
+    const characteristics = result.text?.trim() || "";
 
     return new Response(
       JSON.stringify({ characteristics }),
-      {
-        status: 200,
-        headers: applySecurityHeaders({ "Content-Type": "application/json" }),
-      }
+      { status: 200, headers: applySecurityHeaders({ "Content-Type": "application/json" }) }
     );
-  } catch (err) {
-    console.error("Error extracting user characteristics:", err);
-    // Jangan bocorkan detail error internal
-    return new Response(
-      JSON.stringify({ characteristics: existingCharacteristics || "" }),
-      {
-        status: 200,
-        headers: applySecurityHeaders({ "Content-Type": "application/json" }),
-      }
-    );
+  } catch (error: unknown) {
+    console.error("Extract-characteristics API Error:", error);
+    return errorResponse("Terjadi kesalahan pada server.", 500);
   }
 }
