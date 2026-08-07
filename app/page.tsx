@@ -109,7 +109,7 @@ export default function Home() {
   const [view, setView] = useState<"chat" | "settings">("chat");
   const [username, setUsername] = useState("User");
   const [email, setEmail] = useState("");
-  const [provider, setProvider] = useState<AIProvider>("gemini");
+  const [provider, setProvider] = useState<AIProvider>("gemini-2.5-flash");
   const [requestHistory, setRequestHistory] = useState<number[]>([]);
   const [lastRenameTimestamp, setLastRenameTimestamp] = useState<number | null>(null);
   const [userCharacteristics, setUserCharacteristics] = useState<string>("");
