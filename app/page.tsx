@@ -9,6 +9,7 @@ import Sidebar, { Conversation, MessageAttachment } from "@/components/Sidebar";
 import OnboardingSlides from "@/components/OnboardingSlides";
 import SettingsView from "@/components/SettingsView";
 import ModelSelector, { AIProvider } from "@/components/ModelSelector";
+import { ModelId } from "@/lib/models";
 import DotField from "@/components/DotField";
 import { IconSparkle, IconLoader } from "@/components/Icons";
 import { audioBufferToWav } from "@/lib/audioUtils";
@@ -37,7 +38,7 @@ interface Message {
   content: string | any[]; // string or array for multimodal support
   timestamp: string;
   attachments?: MessageAttachment[]; // file/image attachments stored separately for display
-  provider?: "gemini" | "groq"; // which model answered this message
+  provider?: ModelId; // which model answered this message
   groundingSources?: { title: string; url: string }[]; // web search citations from Gemini
 }
 
