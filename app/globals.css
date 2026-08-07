@@ -550,7 +550,7 @@ body {
 .delete-confirm-btn.delete,
 .custom-popup-btn.confirm {
   background: var(--accent);
-  color: #fff;
+  color: #141414;
 }
 
 [data-theme="light"] .delete-confirm-btn.delete,
