@@ -14,11 +14,11 @@ interface ModelSelectorProps {
 }
 
 const MODEL_ORDER: ModelId[] = [
+  "groq-llama-3.3",
   "gemini-2.5-flash",
   "gemini-3.5-flash-lite",
   "gemini-3.5-flash",
   "gemini-3.6-flash",
-  "groq-llama-3.3",
 ];
 
 export default function ModelSelector({
