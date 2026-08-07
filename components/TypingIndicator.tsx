@@ -1,16 +1,18 @@
 "use client";
 
 import React from "react";
+import { ModelId } from "@/lib/models";
 
 interface TypingIndicatorProps {
-  provider?: "gemini" | "groq";
+  provider?: ModelId;
 }
 
-export default function TypingIndicator({ provider = "gemini" }: TypingIndicatorProps) {
+export default function TypingIndicator({ provider = "gemini-2.5-flash" }: TypingIndicatorProps) {
+  const isGroq = provider === "groq-llama-3.3";
   return (
     <div className="skeleton-response-container">
-      <div className={`message-avatar${provider === "groq" ? " ai-avatar-llama" : ""}`}>
-        {provider === "groq" ? (
+      <div className={`message-avatar${isGroq ? " ai-avatar-llama" : ""}`}>
+        {isGroq ? (
           <img src="/llama.png" alt="Llama" className="ai-model-avatar-img" />
         ) : (
           <img src="/gemini.png" alt="Gemini" className="ai-model-avatar-img" />

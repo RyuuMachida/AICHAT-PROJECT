@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { IconBot, IconCopy, IconCheck, IconClose } from "./Icons";
+import { ModelId } from "@/lib/models";
 
 interface FileAttachment {
   id: string;
@@ -19,11 +20,10 @@ interface ChatMessageProps {
   attachments?: FileAttachment[];
   userPhoto?: string | null;
   username?: string;
-  provider?: "gemini" | "groq";
+  provider?: ModelId;
   groundingSources?: { title: string; url: string }[];
 }
 
-// SVG icons for file cards (inline, no emoji)
 function FileIcon({ size = 14 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

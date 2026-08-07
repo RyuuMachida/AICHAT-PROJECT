@@ -12,6 +12,7 @@ import {
   IconPencil,
   IconTrash,
 } from "./Icons";
+import { ModelId } from "@/lib/models";
 
 export interface MessageAttachment {
   id: string;
@@ -23,7 +24,7 @@ export interface MessageAttachment {
 export interface Conversation {
   id: string;
   title: string;
-  messages: { role: "user" | "assistant"; content: string | any[]; timestamp: string; attachments?: MessageAttachment[]; provider?: "gemini" | "groq" }[];
+  messages: { role: "user" | "assistant"; content: string | any[]; timestamp: string; attachments?: MessageAttachment[]; provider?: ModelId }[];
   createdAt: string;
   pinned?: boolean;
 }
