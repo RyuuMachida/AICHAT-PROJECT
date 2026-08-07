@@ -10,7 +10,7 @@ export type { AIProvider };
 interface ModelSelectorProps {
   provider: AIProvider;
   onSelectProvider: (provider: AIProvider) => void;
-  requestHistory: number[]; // timestamps of requests in milliseconds
+  requestHistory: Record<ModelId, number[]>; // per-model request timestamps
 }
 
 const MODEL_ORDER: ModelId[] = [
@@ -49,7 +49,7 @@ export default function ModelSelector({
   }, [open]);
 
   const windowStart = now - 60000;
-  const requestsInLastMinute = requestHistory.filter((ts) => ts > windowStart).length;
+  const requestsInLastMinute = (requestHistory[provider] || []).filter((ts) => ts > windowStart).length;
 
   const activeConfig = MODEL_CONFIGS[provider] || MODEL_CONFIGS["gemini-2.5-flash"];
   const remainingRPM = Math.max(0, activeConfig.rpmLimit - requestsInLastMinute);
@@ -90,7 +90,7 @@ export default function ModelSelector({
             {MODEL_ORDER.map((key) => {
               const cfg = MODEL_CONFIGS[key];
               const isSelected = key === provider;
-              const provReqs = requestHistory.filter((ts) => ts > windowStart).length;
+              const provReqs = (requestHistory[key] || []).filter((ts) => ts > windowStart).length;
               const provRemaining = Math.max(0, cfg.rpmLimit - provReqs);
 
               return (

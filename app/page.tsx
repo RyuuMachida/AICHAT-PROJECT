@@ -111,7 +111,13 @@ export default function Home() {
   const [username, setUsername] = useState("User");
   const [email, setEmail] = useState("");
   const [provider, setProvider] = useState<AIProvider>("gemini-2.5-flash");
-  const [requestHistory, setRequestHistory] = useState<number[]>([]);
+  const [requestHistory, setRequestHistory] = useState<Record<ModelId, number[]>>({
+    "gemini-2.5-flash": [],
+    "gemini-3.5-flash-lite": [],
+    "gemini-3.5-flash": [],
+    "gemini-3.6-flash": [],
+    "groq-llama-3.3": [],
+  });
   const [lastRenameTimestamp, setLastRenameTimestamp] = useState<number | null>(null);
   const [userCharacteristics, setUserCharacteristics] = useState<string>("");
 
@@ -722,7 +728,7 @@ export default function Home() {
     try {
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       // Record request timestamp for rate limit tracking
-      setRequestHistory((prev) => [...prev, Date.now()]);
+      setRequestHistory((prev) => ({ ...prev, [provider]: [...(prev[provider] || []), Date.now()] }));
 
       const response = await fetch("/api/chat", {
         method: "POST",

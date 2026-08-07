@@ -6,6 +6,7 @@ import { Attachment } from "./ChatInput";
 import { compressImage } from "@/lib/imageUtils";
 
 import ModelSelector, { AIProvider } from "./ModelSelector";
+import { ModelId } from "@/lib/models";
 import Noise from "./Noise";
 
 interface WelcomeScreenProps {
@@ -22,7 +23,7 @@ interface WelcomeScreenProps {
   onStopRecording: () => void;
   provider: AIProvider;
   onSelectProvider: (prov: AIProvider) => void;
-  requestHistory: number[];
+  requestHistory: Record<ModelId, number[]>;
 }
 
 function getGreeting() {
