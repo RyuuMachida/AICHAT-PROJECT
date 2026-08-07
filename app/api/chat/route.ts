@@ -167,11 +167,8 @@ Pedoman & Aturan Respons:
         );
       }
 
-      // ── Gemini Direct Fetch (Bypass SDK) ────────────────────────────────
-      // Grounding hanya untuk 2.5 (quota lebih besar), disable untuk 3.5/3.6
       const useGrounding = modelConfig.apiName === "gemini-2.5-flash";
 
-      // Format contents untuk Gemini API
       const geminiContents = sanitizedMessages.map((msg) => {
         const role = msg.role === "assistant" ? "model" : "user";
 
