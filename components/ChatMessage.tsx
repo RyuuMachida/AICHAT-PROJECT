@@ -181,7 +181,7 @@ function MacTerminalBlock({ language, code }: { language: string; code: string }
   );
 }
 
-export default function ChatMessage({ role, content, timestamp, attachments, userPhoto, username, provider = "gemini", groundingSources }: ChatMessageProps) {
+export default function ChatMessage({ role, content, timestamp, attachments, userPhoto, username, provider = "gemini-2.5-flash", groundingSources }: ChatMessageProps) {
   const [copied, setCopied] = React.useState(false);
 
   // Extract text and image urls from possible multimodal message array
@@ -223,9 +223,9 @@ export default function ChatMessage({ role, content, timestamp, attachments, use
 
   return (
     <div className={`message ${role} message-enter-animated`}>
-      <div className={`message-avatar${role === "assistant" && provider === "groq" ? " ai-avatar-llama" : ""}`}>
+      <div className={`message-avatar${role === "assistant" && provider === "groq-llama-3.3" ? " ai-avatar-llama" : ""}`}>
         {role === "assistant" ? (
-          provider === "groq" ? (
+          provider === "groq-llama-3.3" ? (
             <img src="/llama.png" alt="Llama" className="ai-model-avatar-img" />
           ) : (
             <img src="/gemini.png" alt="Gemini" className="ai-model-avatar-img" />
